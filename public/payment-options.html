@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Payment Options | OpenSpots</title>
+
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Firebase init handled globally -->
+</head>
+
+<body class="page-bg">
+
+  <!-- Global signed-in header -->
+  <div id="header"></div>
+  <div data-page-title="PAYMENT OPTIONS"></div>
+
+  <!-- Back Button -->
+  <div class="venue-details-header-back">
+    <button class="venue-back-btn" onclick="history.back()">く</button>
+  </div>
+
+  <div class="payment-options-container">
+    <section class="payment-card">
+
+      <h2 class="payment-title">Payment Methods</h2>
+      <p class="payment-subtitle">
+        Manage how you pay for reservations on OpenSpots.
+      </p>
+
+      <!-- Placeholder card (Stripe later) -->
+      <div class="payment-method">
+        <div class="payment-method-left">
+          <div class="card-icon">💳</div>
+          <div>
+            <div class="card-label">Card on file</div>
+            <div class="card-desc">Securely stored for faster checkout</div>
+          </div>
+        </div>
+
+        <div class="payment-method-right">
+          <span class="card-status">Not added</span>
+        </div>
+      </div>
+
+      <button class="primary-btn" id="managePaymentBtn">
+        Add / Manage Payment Method
+      </button>
+
+      <p class="payment-note">
+        Payments are processed securely. OpenSpots never stores your card details.
+      </p>
+
+    </section>
+  </div>
+
+  <!-- Shared components -->
+  <script src="load-components.js"></script>
+
+  <!-- Optional logic -->
+  <script src="payment-options.js"></script>
+
+</body>
+</html>

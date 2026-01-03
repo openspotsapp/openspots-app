@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Airport Parking | OpenSpots</title>
+
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
+  <!-- Firebase + Page Script -->
+  <script type="module" src="firebase-init.js"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+    const auth = getAuth();
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "nearby.html";
+      }
+
+    });
+  </script>
+
+  <script type="module" src="airport.js"></script>
+</head>
+
+<body class="page-bg">
+
+  <!-- HEADER (Dynamic title injected by JS) -->
+  <div id="header"></div>
+  <div data-page-title="AIRPORT PARKING"></div>
+
+  <script src="load-components.js"></script>
+
+<section class="widget airport-widget">
+
+  <h2>MAKE A SELECTION BELOW</h2>
+
+  <label>City</label>
+  <select id="citySelect">
+    <option selected disabled>Choose City...</option>
+  </select>
+
+  <label>Airport</label>
+  <select id="airportSelect" disabled>
+    <option selected disabled>Choose Airport...</option>
+  </select>
+
+  <label>Parking Start</label>
+  <input id="startTime" class="date-input" placeholder="Select start date & time">
+
+  <label>Parking End</label>
+  <input id="endTime" class="date-input" placeholder="Select end date & time">
+
+  <small>Select when you’ll leave your car and when you’ll return.</small>
+
+  <button id="reserveAirBtn" disabled>Reserve My Spot</button>
+
+</section>
+
+<!-- NAVBAR -->
+  <div id="navbar">
+    <a href="airport.html" class="nav-item" data-target="airport.html"></a>
+  </div>
+
+</body>

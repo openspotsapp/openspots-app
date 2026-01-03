@@ -1,0 +1,64 @@
+import { auth, db } from "./firebase-init.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+async function resolveUserProfile() {
+  return new Promise((resolve) => {
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        resolve(null);
+        return;
+      }
+
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+
+        if (!snap.exists()) {
+          resolve({
+            email: user.email || "-"
+          });
+          return;
+        }
+
+        const data = snap.data();
+
+        resolve({
+          name: data.display_name || data.first_name || "Account",
+          email: data.email || user.email || "-",
+          phone: data.phone_number || "-",
+        });
+
+      } catch (err) {
+        console.error("Failed to load user profile", err);
+        resolve({
+          email: user.email || "-"
+        });
+      }
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const userNameEl = document.getElementById("userName");
+  const userEmailEl = document.getElementById("userEmail");
+  const userPhoneEl = document.getElementById("userPhone");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  (async () => {
+    const profile = await resolveUserProfile();
+
+    if (!profile) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    userNameEl.textContent = profile.name || "Account";
+    userEmailEl.textContent = profile.email || "";
+    userPhoneEl.textContent = profile.phone || "";
+  })();
+
+  logoutBtn.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "login.html";
+  });
+});

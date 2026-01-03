@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>NRG Premium Parking Reservation</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+<style>
+    #legend {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      align-items: center;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      color: #2f6c5b;
+    }
+    #legend img {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="logo-row">
+      <img src="assets/NRG_Stadium_Logo.png" alt="NRG Stadium Logo" class="nrg-logo" />
+      <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="center-logo" />
+      <img src="assets/texans logo.png" alt="Houston Texans Logo" />
+    </div>
+
+    <h1>Reserve Your Premium Parking at NRG Stadium</h1>
+    <div id="event-display" class="event-display">Loading event details...</div>
+
+    <div class="map-section">
+      <h2>Select Your Parking Spot</h2>
+      <p>Tap a green pin below to reserve your spot.</p>
+      <div class="nrg-map-wrapper venue-map-wrapper">
+      <div id="map"></div>
+      </div>
+      <div id="legend">
+        <div><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><circle cx='8' cy='8' r='7' fill='%2332CD32' stroke='black' stroke-width='1'/></svg>"> Available</div>
+        <div><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><circle cx='8' cy='8' r='7' fill='%23d83b3b' stroke='black' stroke-width='1'/></svg>"> Reserved</div>
+      </div>
+      <div id="selectedSpot" class="selected-spot-display">No spot selected</div>
+      <button id="reserveBtn" disabled>Reserve Parking & Continue</button>
+    </div>
+
+    <p class="disclaimer">
+      Limited to 50 spots per event. Reserve now to guarantee your space.
+    </p>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventName = urlParams.get("event") || "NRG Event - Date TBD";
+    document.getElementById("event-display").innerText = eventName;
+
+    const selectedSpotDisplay = document.getElementById("selectedSpot");
+    const reserveBtn = document.getElementById("reserveBtn");
+    let selectedSpot = null;
+
+    const reservedSpots = ["A5", "A7", "A11", "A25", "A35", "A50"];
+
+    const spots = [
+      { id: "A1", lat: 29.68292093138547, lng: -95.41072719074259 },
+      { id: "A2", lat: 29.68292093138547, lng: -95.41070070794785 },
+      { id: "A3", lat: 29.68292093138547, lng: -95.41067370794785 },
+      { id: "A4", lat: 29.68292093138547, lng: -95.41064659093254 },
+      { id: "A5", lat: 29.68292093138547, lng: -95.41062010813782 },
+      { id: "A6", lat: 29.68292093138547, lng: -95.41059132249136 },
+      { id: "A7", lat: 29.68292093138547, lng: -95.41056483969663 },
+      { id: "A8", lat: 29.682922555960157, lng: -95.41053950832777 },
+      { id: "A9", lat: 29.682922555960157, lng: -95.41051187410719 },
+      { id: "A10", lat: 29.682924886207363, lng: -95.41048539131246 },
+      { id: "A11", lat: 29.682924886207363, lng: -95.4104600599436 },
+      { id: "A12", lat: 29.682924886207363, lng: -95.41043242572302 },
+      { id: "A13", lat: 29.682924886207363, lng: -95.41040594292828 },
+      { id: "A14", lat: 29.682924886207363, lng: -95.41037830870769 },
+      { id: "A15", lat: 29.682924886207363, lng: -95.41035182591297 },
+      { id: "A16", lat: 29.682924886207363, lng: -95.41032649454408 },
+      { id: "A17", lat: 29.682924886207363, lng: -95.41030116317522 },
+      { id: "A18", lat: 29.682924886207363, lng: -95.41027352895463 },
+      { id: "A19", lat: 29.682926051330845, lng: -95.41024589473405 },
+      { id: "A20", lat: 29.682926051330845, lng: -95.41021826051347 },
+      { id: "A21", lat: 29.682926051330845, lng: -95.41019408057043 },
+      { id: "A22", lat: 29.682926051330845, lng: -95.41016644634986 },
+      { id: "A23", lat: 29.682926051330845, lng: -95.41013766070341 },
+      { id: "A24", lat: 29.682926051330845, lng: -95.41011232933454 },
+      { id: "A25", lat: 29.682927998961926, lng: -95.41008469511395 },
+      { id: "A26", lat: 29.682927998961926, lng: -95.41005936374509 },
+      { id: "A27", lat: 29.682927998961926, lng: -95.4100317295245 },
+      { id: "A28", lat: 29.682927998961926, lng: -95.41000409530392 },
+      { id: "A29", lat: 29.682927998961926, lng: -95.4099776125092 },
+      { id: "A30", lat: 29.682927998961926, lng: -95.4099522811403 },
+      { id: "A31", lat: 29.682930217371872, lng: -95.40992510297059 },
+      { id: "A32", lat: 29.682930217371872, lng: -95.40989913166783 },
+      { id: "A33", lat: 29.682930217371872, lng: -95.40987140150827 },
+      { id: "A34", lat: 29.68293200177984, lng: -95.40984598219535 },
+      { id: "A35", lat: 29.68293200177984, lng: -95.40981825203579 },
+      { id: "A36", lat: 29.68293200177984, lng: -95.40979052187622 },
+      { id: "A37", lat: 29.68293200177984, lng: -95.4097642121015 },
+      { id: "A38", lat: 29.68293200177984, lng: -95.40973852782706 },
+      { id: "A39", lat: 29.68293200177984, lng: -95.40971310851413 },
+      { id: "A40", lat: 29.68293200177984, lng: -95.40968306750794 },
+      { id: "A41", lat: 29.68293200177984, lng: -95.40965649277169 },
+      { id: "A42", lat: 29.68293200177984, lng: -95.40962991803546 },
+      { id: "A43", lat: 29.68293200177984, lng: -95.40960565414585 },
+      { id: "A44", lat: 29.68293200177984, lng: -95.40957676856297 },
+      { id: "A45", lat: 29.682933786187753, lng: -95.40955134925004 },
+      { id: "A46", lat: 29.682933786187753, lng: -95.4095247745138 },
+      { id: "A47", lat: 29.682933786187753, lng: -95.40949704435424 },
+      { id: "A48", lat: 29.682933786187753, lng: -95.40946931419467 },
+      { id: "A49", lat: 29.682933786187753, lng: -95.40944273945844 },
+      { id: "A50", lat: 29.68293557059567, lng: -95.4094164139675 }
+    ];
+
+    function distanceMiles(aLat,aLng,bLat,bLng){
+      const R=3958.8;
+      const dLat=(bLat-aLat)*Math.PI/180;
+      const dLon=(bLng-aLng)*Math.PI/180;
+      const a=Math.sin(dLat/2)**2+
+              Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*
+              Math.sin(dLon/2)**2;
+      return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    }
+
+    function niceMiles(mi){return mi>=10?mi.toFixed(1):mi>=1?mi.toFixed(2):Math.max(0.01,mi).toFixed(2);}
+
+    function initMap() {
+      navigator.geolocation.getCurrentPosition((pos)=>{
+        const userPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
+        renderMap(userPos);
+      },()=>renderMap({lat:29.68292,lng:-95.4101}));
+    }
+
+    function renderMap(userPos){
+      const map=new google.maps.Map(document.getElementById("map"),{
+        zoom:18,center:{lat:29.68292,lng:-95.4101},mapTypeId:"satellite",mapTypeControl:true,streetViewControl:false,fullscreenControl:true
+      });
+
+      const userMarker=new google.maps.Marker({
+        position:userPos,map,title:"You are here",
+        icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:"#007bff",fillOpacity:0.9,strokeColor:"#fff",strokeWeight:2,scale:8}
+      });
+
+      const pulse=new google.maps.Circle({
+        map,center:userPos,radius:0,strokeOpacity:0,fillColor:"#3b82f6",fillOpacity:0.35,clickable:false
+      });
+      let r=0,growing=true;
+      setInterval(()=>{r=growing?r+6:0;pulse.setRadius(r);
+        if(r>=120)growing=false;
+        if(!growing&&r===0)growing=true;
+      },60);
+
+      let activeInfo=null;
+
+      spots.forEach(spot=>{
+        const isReserved=reservedSpots.includes(spot.id);
+        const dist=distanceMiles(userPos.lat,userPos.lng,spot.lat,spot.lng);
+        const marker=new google.maps.Marker({
+          position:{lat:spot.lat,lng:spot.lng},map,
+          icon:{path:google.maps.SymbolPath.CIRCLE,
+                fillColor:isReserved?"#d83b3b":"#32CD32",
+                fillOpacity:1,strokeColor:"#fff",strokeWeight:2,scale:7}
+        });
+
+        const info=isReserved
+          ? new google.maps.InfoWindow({
+              content:`<div style='text-align:center;font-family:Montserrat;font-weight:600;'>
+                        Spot ${spot.id}<br><span style='color:#d83b3b;'>Reserved</span></div>`
+            })
+          : new google.maps.InfoWindow({
+              content:`<div style='text-align:center;font-family:Montserrat;'>
+                        <strong>Spot ${spot.id}</strong><br>Available<br>${niceMiles(dist)} mi away<br><br>
+                        <button style='background:#2f6c5b;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:600;' onclick="selectSpot('${spot.id}')">Reserve</button></div>`
+            });
+
+        marker.addListener("click",()=>{if(activeInfo)activeInfo.close();info.open(map,marker);activeInfo=info;});
+      });
+
+      window.selectSpot=function(id){
+        selectedSpot=id;
+        selectedSpotDisplay.textContent=`You have selected spot ${id}`;
+        reserveBtn.disabled=false;
+        reserveBtn.classList.add("active");
+      };
+
+      reserveBtn.addEventListener("click",()=>{
+        if(!selectedSpot)return;
+        window.location.href=`details.html?spot=${selectedSpot}&event=${encodeURIComponent(eventName)}`;
+      });
+    }
+  </script>
+
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnNTs3_DlvbUa4bNcZktr_gxdAj_AIZNs&callback=initMap"></script>
+</body>
+</html>

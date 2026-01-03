@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Airport Parking | OpenSpots</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="firebase-init.js"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+    const auth = getAuth();
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "nearby.html";
+      }
+
+    });
+  </script>
+
+  <script type="module" src="airport-details.js"></script>
+</head>
+
+<body class="page-bg">
+
+  <!-- Load global header -->
+  <div id="header"></div>
+  <div data-page-title="AIRPORT PARKING"></div>
+
+  <!-- Custom Back Button (ONLY ON THIS PAGE) -->
+  <div class="venue-details-header-back">
+    <button class="venue-back-btn" onclick="window.location.href='airport.html'">
+      く
+    </button>
+  </div>
+
+  <section class="page-container airparkwidget">
+    <div id="operatorsList" class="venue-grid"></div>
+  </section>
+
+  <script src="load-components.js"></script>
+
+</body>
+</html>

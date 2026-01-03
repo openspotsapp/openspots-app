@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Complete Setup • OpenSpots</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+      getAuth, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy3VL4_2rXT5QNwlDMQc_GBrOSx_OalFY",
+      authDomain: "open-spots-yt903b.firebaseapp.com",
+      projectId: "open-spots-yt903b",
+      storageBucket: "open-spots-yt903b.firebasestorage.app",
+      messagingSenderId: "298540480317",
+      appId: "1:298540480317:web:e3fdb63b777ebb165ff754",
+      measurementId: "G-4D0EYL43HL"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+
+    // Make sure only logged-in users can see this page
+    onAuthStateChanged(auth, (user) => {
+      if (!user) window.location.href = "login.html";
+      currentUser = user;
+    });
+
+    // Handle form submit
+    async function completeSetup() {
+      const phone = document.getElementById("phone").value.trim();
+      const plate = document.getElementById("plate").value.trim();
+      const model = document.getElementById("model").value.trim();
+      const color = document.getElementById("color").value.trim();
+
+      const warning = document.getElementById("setup-warning");
+
+      if (!phone || !plate || !model || !color) {
+        warning.style.display = "block";
+        warning.textContent = "Please fill out all fields.";
+        return;
+      }
+
+      // Save to Firestore
+      await setDoc(doc(db, "users", currentUser.uid), {
+        phone,
+        licensePlate: plate,
+        vehicleModel: model,
+        vehicleColor: color,
+        setupComplete: true
+      }, { merge: true });
+
+      window.location.href = "nearby.html";
+    }
+
+    window.completeSetup = completeSetup;
+  </script>
+</head>
+
+<body class="login-bg">
+
+  <div class="accset-container">
+
+    <h2 class="accset-title">ACCOUNT INFORMATION</h2>
+
+    <p class="accset-subtitle">
+      Let’s personalize your experience. Add your info so OpenSpots can find 
+      the perfect space for you.
+    </p>
+
+    <!-- Warning -->
+    <div id="setup-warning" class="warning-bar" style="display:none;">
+      Please fill out all fields.
+    </div>
+
+    <!-- Inputs -->
+    <input id="phone" type="text" class="accset-input" placeholder="Phone Number" />
+    <input id="plate" type="text" class="accset-input" placeholder="License Plate" />
+    <input id="model" type="text" class="accset-input" placeholder="Make & Model" />
+    <input id="color" type="text" class="accset-input" placeholder="Vehicle Color" />
+
+    <!-- Button -->
+    <button class="accset-btn" onclick="completeSetup()">COMPLETE SETUP</button>
+
+    <!-- Bottom logo -->
+    <img src="assets/Facebook Profile Picture.png" class="bottom-logo" alt="OpenSpots Logo" />
+
+  </div>
+
+</body>
+
+</html>

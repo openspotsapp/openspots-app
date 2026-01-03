@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>My Spots | OpenSpots</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="myspots.css" />
+</head>
+
+<body>
+
+  <!-- Load global header -->
+  <div id="header"></div>
+  <div data-page-title="MY SPOTS"></div>
+
+  <main class="my-spots-container">
+    <h2 class="page-title">RESERVATIONS</h2>
+    <p id="authError" class="auth-error hidden">
+      You must be logged in to view your reservations.
+    </p>
+    <div id="spotsList" class="spots-list"></div>
+  </main>
+
+  <script src="firebase-init.js" type="module"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+    const auth = getAuth();
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "nearby.html";
+      }
+
+    });
+  </script>
+
+  <script src="my-spots.js" type="module"></script>
+  <script src="load-components.js"></script>
+
+   <!-- NAVBAR -->
+  <div id="navbar">
+    <a href="my-spots.html" class="nav-item" data-target="my-spots.html"></a>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>OpenSpots | Sign Up</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css" />
+
+    
+</head>
+
+<body class="login-bg">
+
+    <div class="signup-container">
+
+        <!-- Logo -->
+        <img src="assets/Facebook Profile Picture.png" class="signup-logo" alt="OpenSpots Logo">
+
+        <!-- Title -->
+        <div class="signup-title">
+        <span>WELCOME TO</span>
+        <span class="signup-title-bold">OPENSPOTS</span>
+        </div>
+
+        <form id="signupForm">
+
+            <div id="error-message"
+                 style="display:none; margin-bottom: 10px; color:#ffebee; background:#b71c1c; padding:10px; border-radius:8px; margin-top:10px; font-size:14px; text-align:center;">
+            </div>
+
+            <input id="firstName" name="first_name" type="text" class="login-input" placeholder="First Name" required />
+            <input id="lastName" name="last_name" type="text" class="login-input" placeholder="Last Name" required />
+            <input id="email" type="email" class="login-input" placeholder="Please Enter Your Email" />
+            <input id="password" type="password" class="login-input" placeholder="Create a Password" />
+            <input id="confirm" type="password" class="login-input" placeholder="Confirm Password" />
+
+            <button type="submit" class="login-btn">CREATE ACCOUNT</button>
+
+        </form>
+
+        <div class="signup-link">
+            Already have an account? <a href="login.html">Login</a>
+        </div>
+    </div>
+
+    <script type="module" src="firebase-init.js" defer></script>
+    <script type="module" src="auth.js" defer></script>
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Reservation Details | OpenSpots</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="details-body">
+
+<!-- HEADER -->
+<header class="details-header">
+  <button class="back-btn" onclick="window.history.back()">← Back</button>
+  <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="details-logo">
+</header>
+
+<!-- MAIN -->
+<main class="details-main">
+  <div class="details-container">
+    <!-- LEFT: Reservation Form -->
+    <section class="details-form-section">
+      <h2>Reservation Details</h2>
+      <p class="subtext">Please provide your contact and vehicle information to complete your reservation.</p>
+
+      <form id="details-form">
+        <label for="firstName">First Name</label>
+        <input type="text" id="firstName" name="firstName" required>
+
+        <label for="lastName">Last Name</label>
+        <input type="text" id="lastName" name="lastName" required>
+
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" name="phone" required pattern="[0-9+\-() ]+">
+
+        <label for="plate">License Plate</label>
+        <input type="text" id="plate" name="plate" required>
+
+        <label for="vehicle">Vehicle Make & Model</label>
+        <input type="text" id="vehicle" name="vehicle" required>
+
+        <button type="submit" class="btn-primary">Continue to Checkout</button>
+      </form>
+    </section>
+
+    <!-- RIGHT: Reservation Summary -->
+    <aside class="summary-section">
+      <div id="summary" class="summary-box"></div>
+      <p class="privacy-note">
+        We may use your data to contact you about your reservation.  
+        For more details, see our <a href="privacy details.html">Privacy Policy</a>.
+      </p>
+    </aside>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-container">
+    <div class="footer-brand">
+      <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="footer-logo">
+      <p><strong>OpenSpots</strong> | Smarter Parking with Sensors</p>
+      <p>Powered by AI & IoT • Est. 2025</p>
+    </div>
+
+    <div class="footer-links">
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="terms details.html">Terms & Conditions</a></li>
+          <li><a href="privacy details.html">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-social">
+      <h4>Follow Us</h4>
+      <div class="social-icons">
+        <a href="https://instagram.com/openspotsapp" target="_blank"><img src="assets/badge instagram.png" alt="Instagram" /></a>
+        <a href="https://twitter.com/openspotsapp" target="_blank"><img src="assets/badge X.png" alt="Twitter/X" /></a>
+        <a href="https://tiktok.com/@openspotsapp" target="_blank"><img src="assets/badge tiktok.png" alt="TikTok" /></a>
+        <a href="https://youtube.com/@openspotsapp" target="_blank"><img src="assets/badge youtube.png" alt="YouTube" /></a>
+        <a href="mailto:contact@openspots.app"><img src="assets/badge email.png" alt="Email" /></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© OpenSpots 2025. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<script>
+  // Pull params passed into details.html
+  const urlParams = new URLSearchParams(window.location.search);
+  const spot = urlParams.get("spot");
+  const event = urlParams.get("event");
+  const price = urlParams.get("price") || 25; // fallback until DB-driven
+
+  // Show the Reservation Summary on the right
+  const summary = document.getElementById("summary");
+  summary.innerHTML = `
+    <h3>Reservation Summary</h3>
+    <div class="summary-item"><strong>Event:</strong> ${event || "Not specified"}</div>
+    <div class="summary-item"><strong>Selected Spot:</strong> ${spot || "None"}</div>
+    <div class="summary-item"><strong>Price:</strong> $${price}</div>
+  `;
+
+  // Intercept form submit → redirect to checkout.html
+  document.getElementById("details-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    // Collect form fields
+    const data = {
+      firstName: document.getElementById("firstName").value.trim(),
+      lastName: document.getElementById("lastName").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      phone: document.getElementById("phone").value.trim(),
+      plate: document.getElementById("plate").value.trim(),
+      vehicle: document.getElementById("vehicle").value.trim(),
+      spot,
+      event,
+      price
+    };
+
+    // Optional: keep for prefill/receipt use on checkout/thankyou
+    sessionStorage.setItem("openspotsReservation", JSON.stringify(data));
+    sessionStorage.setItem("openspotsReservationMeta", JSON.stringify({
+      eventName: event || "Not specified",
+      spotName: spot || "None",
+    }));
+
+    // Build the checkout URL with params
+    const checkoutUrl = new URL("./checkout.html", window.location.href);
+    checkoutUrl.searchParams.set("event", event || "");
+    checkoutUrl.searchParams.set("spot", spot || "");
+    checkoutUrl.searchParams.set("price", price);
+
+    // Go to checkout
+    window.location.href = checkoutUrl.toString();
+  });
+</script>
+
+
+</body>
+</html>
