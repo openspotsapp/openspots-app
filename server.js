@@ -44,7 +44,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // STRIPE WEBHOOK (STEP 1 — RECEIVE ONLY)
 // ─────────────────────────────────────────────
 app.post(
-  "/webhook",
+  "/webhooks/stripe",
   bodyParser.raw({ type: "application/json" }),
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
