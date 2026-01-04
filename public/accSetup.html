@@ -14,36 +14,22 @@
 
   <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { 
-      getAuth, 
-      onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      setDoc 
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { doc, setDoc } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { app, db } from "./firebase-init.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDy3VL4_2rXT5QNwlDMQc_GBrOSx_OalFY",
-      authDomain: "open-spots-yt903b.firebaseapp.com",
-      projectId: "open-spots-yt903b",
-      storageBucket: "open-spots-yt903b.firebasestorage.app",
-      messagingSenderId: "298540480317",
-      appId: "1:298540480317:web:e3fdb63b777ebb165ff754",
-      measurementId: "G-4D0EYL43HL"
-    };
-
-    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
-
     let currentUser = null;
 
     // Make sure only logged-in users can see this page
     onAuthStateChanged(auth, (user) => {
-      if (!user) window.location.href = "login.html";
+      if (!user) {
+        // Not logged in → force login
+        window.location.replace("/login.html");
+        return;
+      }
       currentUser = user;
     });
 
@@ -59,6 +45,12 @@
       if (!phone || !plate || !model || !color) {
         warning.style.display = "block";
         warning.textContent = "Please fill out all fields.";
+        return;
+      }
+
+      if (!currentUser) {
+        warning.style.display = "block";
+        warning.textContent = "Please log in to complete setup.";
         return;
       }
 

@@ -55,14 +55,17 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnNTs3_DlvbUa4bNcZktr_gxdAj_AIZNs"></script>
   <script src="firebase-init.js" type="module"></script>
   <script type="module">
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { app } from "./firebase-init.js";
 
-    const auth = getAuth();
-    onAuthStateChanged(auth, user => {
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = "nearby.html";
+        // Not logged in → force login
+        window.location.replace("/login.html");
       }
-
     });
   </script>
 

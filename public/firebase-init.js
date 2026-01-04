@@ -2,7 +2,11 @@
 // Firebase Initialization (GLOBAL)
 // ============================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import {
+  getApp,
+  getApps,
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
@@ -17,12 +21,8 @@ const firebaseConfig = {
 };
 
 // Prevent duplicate initialization
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (e) {
-  console.log("Firebase already initialized.");
-}
+export const app =
+  getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-export const auth = getAuth();
-export const db = getFirestore();
+export const auth = getAuth(app);
+export const db = getFirestore(app);
