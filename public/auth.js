@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        window.location.href = "nearby.html";
+        // index.html handles redirect
       } catch (err) {
         errorBox.style.display = "block";
         errorBox.textContent = "Incorrect login. Please try again.";

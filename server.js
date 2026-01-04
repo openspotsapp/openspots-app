@@ -161,25 +161,23 @@ app.get("/health", (req, res) => {
 
 // Stripe success finalizer
 app.get("/stripe/success", async (req, res) => {
-  const { session_id } = req.query;
-  if (!session_id) return res.status(400).send("Missing session_id");
+  try {
+    const sessionId = req.query.session_id;
+    if (!sessionId) return res.status(400).send("Missing session ID");
 
-  const session = await stripe.checkout.sessions.retrieve(session_id);
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-  if (session.payment_status !== "paid") {
-    return res.status(400).send("Payment not completed");
+    if (session.payment_status !== "paid") {
+      return res.status(400).send("Payment not completed");
+    }
+
+    // TODO (next step): save reservation using session.metadata
+
+    res.redirect("/my-spots.html");
+  } catch (err) {
+    console.error("Stripe success error:", err);
+    res.status(500).send("Stripe success failed");
   }
-
-  const reservationRef = await db.collection("reservations").add({
-    user_id: session.metadata.userId,
-    venue_id: session.metadata.venueId,
-    spot_label: session.metadata.spotLabel,
-    price_paid: session.amount_total / 100,
-    status: "confirmed",
-    created_at: admin.firestore.FieldValue.serverTimestamp()
-  });
-
-  res.redirect(`/my-spot-details.html?reservationId=${reservationRef.id}`);
 });
 
 // API endpoint for Urbiotica spot status
