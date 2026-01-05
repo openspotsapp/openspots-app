@@ -217,6 +217,9 @@
 
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
+    if (user && !window.location.search.includes("stay")) {
+      window.location.href = "nearby.html";
+    }
   });
 
   const category     = document.getElementById('category');

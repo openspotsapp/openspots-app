@@ -51,12 +51,19 @@
   async function getOperatorByUserId(userId) {
     const q = query(
       collection(db, "operators"),
-      where("user_id", "==", doc(db, "users", userId)),
       where("is_active", "==", true)
     );
 
     const snap = await getDocs(q);
-    return snap.empty ? null : snap.docs[0].data();
+    const operatorDoc = snap.docs.find(d => {
+      const data = d.data();
+      return (
+        data.user_id?.id === userId ||   // DocumentReference
+        data.user_id === userId           // string UID fallback
+      );
+    });
+
+    return operatorDoc ? operatorDoc.data() : null;
   }
 
   onAuthStateChanged(auth, async (user) => {
@@ -68,6 +75,7 @@
     const operatorDoc = await getOperatorByUserId(user.uid);
 
     if (!operatorDoc || !operatorDoc.is_active) {
+      alert("You are not registered as an attendant yet.");
       window.location.href = "/nearby.html";
     }
   });

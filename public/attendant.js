@@ -23,18 +23,26 @@ onAuthStateChanged(auth, async (user) => {
 
   const q = query(
     collection(db, "operators"),
-    where("user_id", "==", doc(db, "users", user.uid)),
     where("is_active", "==", true)
   );
 
   const snap = await getDocs(q);
-  if (snap.empty) {
-    alert("You are not authorized to access the attendant console.");
-    window.location.href = "/login.html";
+
+  const operatorDoc = snap.docs.find(d => {
+    const data = d.data();
+    return (
+      data.user_id?.id === user.uid ||   // DocumentReference
+      data.user_id === user.uid           // string UID fallback
+    );
+  });
+
+  if (!operatorDoc) {
+    alert("You are not registered as an attendant yet.");
+    window.location.href = "/nearby.html";
     return;
   }
 
-  const operatorData = snap.docs[0].data();
+  const operatorData = operatorDoc.data();
   loadVenues(operatorData.assigned_venues || []);
 });
 
@@ -75,7 +83,12 @@ function renderReservations(snapshot) {
 
   snapshot.forEach((docSnap) => {
     const r = docSnap.data();
-    const status = deriveStatus(r.start_time.toDate(), r.end_time.toDate());
+    if (!r.start_time || !r.end_time) return;
+
+    const start = r.start_time.toDate ? r.start_time.toDate() : new Date(r.start_time);
+    const end   = r.end_time.toDate   ? r.end_time.toDate()   : new Date(r.end_time);
+
+    const status = deriveStatus(start, end);
 
     const card = document.createElement("div");
     card.className = `reservation-card ${status}`;
@@ -102,5 +115,6 @@ function deriveStatus(start, end) {
 }
 
 function formatTime(ts) {
-  return ts.toDate().toLocaleString();
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString();
 }
