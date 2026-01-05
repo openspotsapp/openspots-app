@@ -1768,7 +1768,7 @@ footer {
 =============================== */
 @media (max-width: 768px) {
   .spot-info-card {
-    bottom: 110px; /* ⬅️ clears navbar + center button */
+    bottom: 55px; /* ⬅️ clears navbar + center button */
   }
 }
 
