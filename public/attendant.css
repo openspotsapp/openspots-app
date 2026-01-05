@@ -6,16 +6,22 @@ body {
 }
 
 .attendant-header {
-  padding: 16px;
+  position: relative;
   background: #133a33;
+  padding: 18px;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+}
+
+.header-center {
+  text-align: center;
 }
 
 .attendant-header h1 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
 }
 
 select {
@@ -23,10 +29,19 @@ select {
   font-size: 1rem;
 }
 
+
+#venueSelect {
+  padding: 8px;
+  font-size: 1rem;
+  margin: 0 auto;      /* 👈 THIS is the key */
+  display: block;     /* 👈 ensures margin auto works */
+}
+
 .legend {
   display: flex;
   gap: 8px;
   padding: 12px;
+  justify-content: center;
 }
 
 .badge {
@@ -62,4 +77,41 @@ select {
 .empty {
   text-align: center;
   opacity: 0.7;
+}
+
+.attendant-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.attendant-logo {
+  height: 48px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+}
+
+
+.exit-btn {
+  position: absolute;
+  right: 18px;
+  top: 45px;
+  background: transparent;
+  border: 1px solid #eaf6f3;
+  color: #eaf6f3;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.exit-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.attendant-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
 }

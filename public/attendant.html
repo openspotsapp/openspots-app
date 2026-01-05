@@ -11,11 +11,18 @@
 <body>
 
 <header class="attendant-header">
-  <h1>Attendant Console</h1>
-  <select id="venueSelect">
-    <option value="">Select Venue</option>
-  </select>
+  <div class="header-center">
+    <img
+      src="assets/Facebook Profile Picture.png"
+      alt="OpenSpots"
+      class="attendant-logo"
+    />
+    <h1>ATTENDANT CONSOLE</h1>
+  </div>
+
+  <button id="exitAttendant" class="exit-btn">Exit</button>
 </header>
+
 
 <main>
   <section class="legend">
@@ -25,61 +32,15 @@
     <span class="badge invalid">Invalid</span>
   </section>
 
+  <select id="venueSelect">
+    <option value="">Select Venue</option>
+  </select>
+
   <section id="reservationsList">
     <p class="loading">Loading reservations…</p>
   </section>
 </main>
 
-<script type="module">
-  import { getAuth, onAuthStateChanged } from
-    "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-  import {
-    collection,
-    doc,
-    getDocs,
-    query,
-    where
-  } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
-  import { app, db } from "./firebase-init.js";
-
-  const auth = getAuth(app);
-
-  function redirectToLogin() {
-    window.location.href = "/login.html";
-  }
-
-  async function getOperatorByUserId(userId) {
-    const q = query(
-      collection(db, "operators"),
-      where("is_active", "==", true)
-    );
-
-    const snap = await getDocs(q);
-    const operatorDoc = snap.docs.find(d => {
-      const data = d.data();
-      return (
-        data.user_id?.id === userId ||   // DocumentReference
-        data.user_id === userId           // string UID fallback
-      );
-    });
-
-    return operatorDoc ? operatorDoc.data() : null;
-  }
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      redirectToLogin();
-      return;
-    }
-
-    const operatorDoc = await getOperatorByUserId(user.uid);
-
-    if (!operatorDoc || !operatorDoc.is_active) {
-      alert("You are not registered as an attendant yet.");
-      window.location.href = "/nearby.html";
-    }
-  });
-</script>
 <script type="module" src="attendant.js"></script>
 </body>
 </html>

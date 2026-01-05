@@ -73,7 +73,7 @@ venueSelect.addEventListener("change", () => {
   unsubscribeReservations = onSnapshot(q, renderReservations);
 });
 
-function renderReservations(snapshot) {
+async function renderReservations(snapshot) {
   reservationsList.innerHTML = "";
 
   if (snapshot.empty) {
@@ -81,14 +81,24 @@ function renderReservations(snapshot) {
     return;
   }
 
-  snapshot.forEach((docSnap) => {
+  for (const docSnap of snapshot.docs) {
     const r = docSnap.data();
-    if (!r.start_time || !r.end_time) return;
+    if (!r.start_time || !r.end_time) continue;
 
-    const start = r.start_time.toDate ? r.start_time.toDate() : new Date(r.start_time);
-    const end   = r.end_time.toDate   ? r.end_time.toDate()   : new Date(r.end_time);
+    const spotSnap = await getDocs(
+      query(
+        collection(db, "spots"),
+        where("spot_id", "==", r.spot_number),
+        where("venue_ref", "==", r.venue_id)
+      )
+    );
 
-    const status = deriveStatus(start, end);
+    const spotDoc = spotSnap.docs[0];
+    const locationLink = spotDoc?.exists()
+      ? `https://www.google.com/maps?q=${spotDoc.data().location.latitude},${spotDoc.data().location.longitude}`
+      : null;
+
+    const status = deriveStatus(r);
 
     const card = document.createElement("div");
     card.className = `reservation-card ${status}`;
@@ -97,6 +107,7 @@ function renderReservations(snapshot) {
       <div class="info">
         <h3>Spot ${r.spot_number}</h3>
         <p>${formatTime(r.start_time)} – ${formatTime(r.end_time)}</p>
+        ${locationLink ? `<a href="${locationLink}" target="_blank">📍 View Spot</a>` : ""}
       </div>
       <div class="status">
         <span class="badge ${status}">${status.toUpperCase()}</span>
@@ -104,17 +115,41 @@ function renderReservations(snapshot) {
     `;
 
     reservationsList.appendChild(card);
-  });
+  }
 }
 
-function deriveStatus(start, end) {
+function deriveStatus(reservation) {
   const now = new Date();
-  if (now < start) return "confirmed";
-  if (now >= start && now <= end) return "arrived";
-  return "expired";
+
+  const start = reservation.start_time.toDate();
+  const end = reservation.end_time.toDate();
+
+  // DB-backed status wins
+  if (reservation.status === "invalid") return "invalid";
+  if (now < start && reservation.status === "arrived") {
+    return "invalid";
+  }
+  if (reservation.status === "arrived") return "arrived";
+  if (reservation.status === "confirmed") {
+    if (now > end) return "expired";
+    return "confirmed";
+  }
+
+  // Fallback safety
+  if (now > end) return "expired";
+
+  return "confirmed";
 }
 
 function formatTime(ts) {
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleString();
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const exitBtn = document.getElementById("exitAttendant");
+
+  exitBtn?.addEventListener("click", () => {
+    window.location.href = "nearby.html";
+  });
+});

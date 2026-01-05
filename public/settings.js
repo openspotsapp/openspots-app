@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase-init.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 async function resolveUserProfile() {
   return new Promise((resolve) => {
@@ -72,15 +72,21 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const operatorRef = doc(db, "operators", user.uid);
-    const operatorSnap = await getDoc(operatorRef);
+    const operatorQuery = query(
+      collection(db, "operators"),
+      where("user_id", "==", `users/${user.uid}`)
+    );
 
-    if (!operatorSnap.exists()) {
+    const operatorSnap = await getDocs(operatorQuery);
+
+    if (operatorSnap.empty) {
       alert("You are not registered as an attendant yet.");
       return;
     }
 
-    if (operatorSnap.data().is_active === false) {
+    const operator = operatorSnap.docs[0].data();
+
+    if (operator.is_active === false) {
       alert("Your attendant access is inactive.");
       return;
     }
