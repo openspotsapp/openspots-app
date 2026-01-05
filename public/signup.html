@@ -15,7 +15,58 @@
     <!-- Styles -->
     <link rel="stylesheet" href="style.css" />
 
-    
+  <script type="module">
+    import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { doc, setDoc, serverTimestamp } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { app, db } from "./firebase-init.js";
+
+    const auth = getAuth(app);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const signupForm = document.getElementById("signupForm");
+      if (!signupForm) return;
+
+      signupForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const firstName = document.getElementById("firstName").value.trim();
+        const lastName = document.getElementById("lastName").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const confirm = document.getElementById("confirm").value.trim();
+        const errorBox = document.getElementById("error-message");
+
+        if (password !== confirm) {
+          errorBox.style.display = "block";
+          errorBox.textContent = "Passwords do not match.";
+          return;
+        }
+
+        try {
+          const { user } = await createUserWithEmailAndPassword(auth, email, password);
+          await sendEmailVerification(user);
+
+          await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            email: user.email,
+            first_name: firstName,
+            last_name: lastName,
+            display_name: `${firstName} ${lastName}`,
+            created_time: serverTimestamp(),
+            setupComplete: false
+          });
+
+          window.location.href = "accSetup.html";
+        } catch (err) {
+          errorBox.style.display = "block";
+          errorBox.textContent = "Account could not be created.";
+        }
+      });
+    });
+  </script>
 </head>
 
 <body class="login-bg">
@@ -39,9 +90,9 @@
 
             <input id="firstName" name="first_name" type="text" class="login-input" placeholder="First Name" required />
             <input id="lastName" name="last_name" type="text" class="login-input" placeholder="Last Name" required />
-            <input id="email" type="email" class="login-input" placeholder="Please Enter Your Email" />
-            <input id="password" type="password" class="login-input" placeholder="Create a Password" />
-            <input id="confirm" type="password" class="login-input" placeholder="Confirm Password" />
+            <input id="email" type="email" class="login-input" placeholder="Please Enter Your Email" required />
+            <input id="password" type="password" class="login-input" placeholder="Create a Password" required />
+            <input id="confirm" type="password" class="login-input" placeholder="Confirm Password" required />
 
             <button type="submit" class="login-btn">CREATE ACCOUNT</button>
 
@@ -51,12 +102,5 @@
             Already have an account? <a href="login.html">Login</a>
         </div>
     </div>
-
-    <script type="module" src="firebase-init.js" defer></script>
-    <script type="module" src="auth.js" defer></script>
-
-
-
-
 </body>
 </html>

@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const operatorQuery = query(
       collection(db, "operators"),
-      where("user_id", "==", `users/${user.uid}`)
+      where("user_id", "==", doc(db, "users", user.uid))
     );
 
     const operatorSnap = await getDocs(operatorQuery);
