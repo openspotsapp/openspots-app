@@ -37,8 +37,8 @@
     <img src="assets/Parking Sensor.png" alt="Parking lot placeholder">
   </div>
   <div class="hero-text">
-    <h2>Smart Sensors. Smart Parking.</h2>
-    <p>Reserve your spot ahead of time or find one in real-time. With OpenSpots, parking is guaranteed, effortless, and powered by sensors.</p>
+    <h2>Guaranteed Parking. Before or When You Arrive.</h2>
+    <p>OpenSpots lets you reserve verified parking spots in advance or find real-time availability nearby — all powered by smart sensors. No guessing. No circling. Your spot is ready when you arrive.</p>
 
     <!-- Widget -->
     <div class="widget">
@@ -51,10 +51,6 @@
       <div id="reserveForm">
         <select id="category">
           <option selected disabled>Choose Venue or Airport...</option>
-          <option value="nrg">NRG Stadium</option>
-          <option value="shell">Shell Energy Stadium</option>
-          <option value="daikin">Minute Maid Park (Daikin Park)</option>
-          <option value="airport">Airport Parking</option>
         </select>
 
         <select id="eventList" disabled>
@@ -65,21 +61,6 @@
   <label for="citySelect">City:</label>
   <select id="citySelect">
     <option selected disabled>Choose City...</option>
-    <option value="houston">Houston, TX</option>
-    <option value="dallas">Dallas–Fort Worth, TX</option>
-    <option value="austin">Austin, TX</option>
-    <option value="sanantonio">San Antonio, TX</option>
-    <option value="atlanta">Atlanta, GA</option>
-    <option value="miami">Miami, FL</option>
-    <option value="orlando">Orlando, FL</option>
-    <option value="losangeles">Los Angeles, CA</option>
-    <option value="sanfrancisco">San Francisco, CA</option>
-    <option value="chicago">Chicago, IL</option>
-    <option value="newyork">New York City, NY</option>
-    <option value="denver">Denver, CO</option>
-    <option value="lasvegas">Las Vegas, NV</option>
-    <option value="seattle">Seattle, WA</option>
-    <option value="washingtondc">Washington D.C.</option>
   </select>
 
   <label for="airportName">Airport:</label>
@@ -216,312 +197,217 @@
 
 <script type="module" src="app.js"></script>
 <script type="module">
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    query,
+    where,
+    getDocs,
+    doc
+  } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+  import {
+    getAuth,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
   import { app } from "./firebase-init.js";
 
+  const db = getFirestore(app);
   const auth = getAuth(app);
+  let currentUser = null;
 
   onAuthStateChanged(auth, (user) => {
-    if (user) {
-      window.location.replace("/nearby.html");
-    }
+    currentUser = user;
   });
-</script>
 
-</body>
-</html>
+  const category     = document.getElementById('category');
+  const eventList    = document.getElementById('eventList');
+  const airportDates = document.getElementById('airportDates');
+  const reserveBtn   = document.getElementById('reserveBtn');
+  const citySelect   = document.getElementById("citySelect");
+  const airportName  = document.getElementById("airportName");
+  const airportSection = document.getElementById("airportSection");
 
-<script>
-const category     = document.getElementById('category');
-const eventList    = document.getElementById('eventList');
-const airportDates = document.getElementById('airportDates');
-const reserveBtn   = document.getElementById('reserveBtn');
+  async function loadEventsForVenue(venueId) {
+    eventList.innerHTML = `<option selected disabled>Choose an event...</option>`;
+    eventList.disabled = true;
 
-// === MANUAL EVENT DATA ===
-const eventsData = {
-  nrg: [
-    { name: "Beyoncé – Oct 12, 2025" },
-    { name: "Texans vs Cowboys – Oct 20, 2025" },
-    { name: "Monster Jam – Nov 2, 2025" },
-    { name: "Houston Rodeo Kickoff – Nov 15, 2025" },
-    { name: "Taylor Swift The Eras Tour – Dec 5 2025" }
-  ],
-  shell: [
-    { name: "Houston Dynamo vs LA FC – Oct 15 2025" },
-    { name: "Bad Bunny Live – Nov 1 2025" },
-    { name: "Coldplay in Concert – Nov 21 2025" },
-    { name: "Houston Dash vs NC Courage – Dec 3 2025" }
-  ],
-  daikin: [
-    { name: "Astros vs Yankees – Oct 18 2025" },
-    { name: "Astros Fan Fest – Oct 26 2025" },
-    { name: "Postseason Concert Series – Oct 30 2025" },
-    { name: "World Series Watch Party – Nov 1 2025" }
-  ]
-};
+    const venueRef = doc(db, "venues", venueId);
+    const eventsSnap = await getDocs(
+      query(
+        collection(db, "events"),
+        where("venue_ref", "==", venueRef),
+        where("is_active", "==", true),
+        where("event_date", ">=", new Date())
+      )
+    );
 
-// === LOAD EVENTS FROM LOCAL JSON ===
-function loadEvents(type) {
-  const events = eventsData[type] || [];
-  eventList.innerHTML = '<option selected disabled>Choose an event...</option>';
-  events.forEach(ev => {
-    const opt = document.createElement("option");
-    opt.value = ev.name;
-    opt.textContent = ev.name;
-    eventList.appendChild(opt);
-  });
-  eventList.disabled = events.length === 0;
-}
-
-// --- Category change logic ----------------------------------
-const airportSection = document.getElementById("airportSection");
-
-// --- Category change logic ---
-category.addEventListener("change", () => {
-  const val = category.value;
-  eventList.innerHTML = '<option>Loading…</option>';
-  eventList.disabled = true;
-  reserveBtn.disabled = true;
-
-  if (val === "airport") {
-  airportSection.style.display = "block";
-  eventList.style.display = "none";
-  reserveBtn.disabled = true; // start disabled
-  updateButtonVisualState();  // ensure it turns gray
-  } else {
-    airportSection.style.display = "none";
-    eventList.style.display = "block";
-    loadEvents(val);
-  }
-});
-
-// === AIRPORT DATABASE ===
-const airportData = {
-  houston: [
-    "George Bush Intercontinental (IAH)",
-    "William P. Hobby Airport (HOU)"
-  ],
-  dallas: [
-    "Dallas/Fort Worth International (DFW)",
-    "Dallas Love Field (DAL)"
-  ],
-  austin: [
-    "Austin-Bergstrom International (AUS)"
-  ],
-  sanantonio: [
-    "San Antonio International (SAT)"
-  ],
-  atlanta: [
-    "Hartsfield–Jackson Atlanta International (ATL)"
-  ],
-  miami: [
-    "Miami International (MIA)",
-    "Fort Lauderdale–Hollywood International (FLL)"
-  ],
-  orlando: [
-    "Orlando International (MCO)"
-  ],
-  losangeles: [
-    "Los Angeles International (LAX)",
-    "Hollywood Burbank Airport (BUR)",
-    "Long Beach Airport (LGB)"
-  ],
-  sanfrancisco: [
-    "San Francisco International (SFO)",
-    "Oakland International (OAK)",
-    "San Jose International (SJC)"
-  ],
-  chicago: [
-    "O’Hare International (ORD)",
-    "Midway International (MDW)"
-  ],
-  newyork: [
-    "John F. Kennedy International (JFK)",
-    "LaGuardia (LGA)",
-    "Newark Liberty International (EWR)"
-  ],
-  denver: [
-    "Denver International (DEN)"
-  ],
-  lasvegas: [
-    "Harry Reid International (LAS)"
-  ],
-  seattle: [
-    "Seattle–Tacoma International (SEA)"
-  ],
-  washingtondc: [
-    "Dulles International (IAD)",
-    "Reagan National (DCA)",
-    "Baltimore/Washington International (BWI)"
-  ]
-};
-
-// === Dynamic City → Airport Update ===
-const citySelect = document.getElementById("citySelect");
-const airportName = document.getElementById("airportName");
-
-citySelect.addEventListener("change", () => {
-  const city = citySelect.value;
-  airportName.innerHTML = '<option selected disabled>Choose Airport...</option>';
-  if (airportData[city]) {
-    airportData[city].forEach(ap => {
+    eventsSnap.forEach(docSnap => {
+      const ev = docSnap.data();
       const opt = document.createElement("option");
-      opt.value = ap;
-      opt.textContent = ap;
+      opt.value = docSnap.id;
+      const eventDate = ev.event_date.toDate();
+      opt.textContent = `${ev.event_name} — ${eventDate.toLocaleDateString()}`;
+      eventList.appendChild(opt);
+    });
+
+    eventList.disabled = false;
+  }
+
+  async function loadVenues() {
+    category.innerHTML = `<option selected disabled>Choose Venue or Airport...</option>`;
+
+    const venuesSnap = await getDocs(
+      query(collection(db, "venues"), where("is_active", "==", true))
+    );
+
+    venuesSnap.forEach(docSnap => {
+      const v = docSnap.data();
+      const opt = document.createElement("option");
+      opt.value = docSnap.id;
+      opt.textContent = v.name;
+      opt.dataset.type = v.venue_type; // stadium | airport | private
+      category.appendChild(opt);
+    });
+  }
+
+  async function loadAirports(city) {
+    airportName.innerHTML = `<option selected disabled>Choose Airport...</option>`;
+    airportName.disabled = true;
+
+    const snap = await getDocs(
+      query(
+        collection(db, "airports"),
+        where("city", "==", city),
+        where("is_active", "==", true)
+      )
+    );
+
+    snap.forEach(docSnap => {
+      const a = docSnap.data();
+      const opt = document.createElement("option");
+      opt.value = docSnap.id;
+      opt.textContent = a.name;
       airportName.appendChild(opt);
     });
+
     airportName.disabled = false;
-  } else {
-    airportName.disabled = true;
-  }
-});
-
-
-// --- Enable button when event chosen -------------------------
-eventList.addEventListener('change',()=>{
-  if(eventList.value!=='') reserveBtn.disabled=false;
-});
-
-// --- Redirect to correct venue page -----------------------------
-reserveBtn.addEventListener("click", () => {
-  const venue = category.value;
-  let eventName = eventList.value;
-
-  // For airports, build richer label
-  const city = document.getElementById("citySelect")?.value || "";
-  const airportName = document.getElementById("airportName")?.value || "";
-  const arrive = document.getElementById("arriveDate")?.value || "";
-  const depart = document.getElementById("departDate")?.value || "";
-
-  let airportEvent = "";
-  if (venue === "airport") {
-    const cityPretty = city ? city.charAt(0).toUpperCase() + city.slice(1) : "";
-
-    // Custom date/time formatting without seconds
-    const formatDateTime = (dateString) => {
-      if (!dateString) return "TBD";
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
-    };
-
-    const arriveFmt = formatDateTime(arrive);
-    const departFmt = formatDateTime(depart);
-
-    airportEvent = `${airportName} – ${cityPretty}\nParking Start: ${arriveFmt}\nParking End: ${departFmt}`;
-    eventName = airportEvent; // Only override for airport
   }
 
-  const redirectMap = {
-    nrg: "reserve-a-spot.html",
-    shell: "reserve-a-shell.html",
-    daikin: "reserve-a-daikin.html",
-    airport: "reserve-a-airport.html",
-  };
+  loadVenues();
 
-  const targetPage = redirectMap[venue] || "reserve-a-spot.html";
-  const destination = `${targetPage}?venue=${encodeURIComponent(
-    venue
-  )}&event=${encodeURIComponent(eventName || "Event TBD")}`;
-  window.location.href = destination;
-});
+  category.addEventListener("change", async () => {
+    const selected = category.options[category.selectedIndex];
+    const type = selected?.dataset.type;
 
-
-// === VALIDATION FOR AIRPORT FIELDS ===
-function validateAirportForm() {
-  const city = citySelect.value;
-  const airport = airportName.value;
-  const arrive = document.getElementById("arriveDate").value;
-  const depart = document.getElementById("departDate").value;
-
-  // Enable Reserve button only if all are filled
-  if (category.value === "airport" && city && airport && arrive && depart) {
-    reserveBtn.disabled = false;
-  } else if (category.value === "airport") {
     reserveBtn.disabled = true;
+    updateButtonVisualState();
+
+    if (type === "airport") {
+      airportSection.style.display = "block";
+      eventList.style.display = "none";
+    } else {
+      airportSection.style.display = "none";
+      eventList.style.display = "block";
+      await loadEventsForVenue(category.value);
+    }
+  });
+
+  citySelect.addEventListener("change", () => {
+    loadAirports(citySelect.value);
+  });
+
+  eventList.addEventListener('change',()=>{
+    if(eventList.value!=='') reserveBtn.disabled=false;
+    updateButtonVisualState();
+  });
+
+  reserveBtn.addEventListener("click", () => {
+    if (!currentUser) {
+      window.location.href = "login.html?redirect=index";
+      return;
+    }
+
+    const venueId = category.value;
+    const eventId = eventList.value || "";
+
+    window.location.href = `reserve-a-spot.html?venue=${venueId}&event=${eventId}`;
+  });
+
+  function validateAirportForm() {
+    const city = citySelect.value;
+    const airport = airportName.value;
+    const arrive = document.getElementById("arriveDate").value;
+    const depart = document.getElementById("departDate").value;
+
+    if (category.options[category.selectedIndex]?.dataset.type === "airport" && city && airport && arrive && depart) {
+      reserveBtn.disabled = false;
+    } else if (category.options[category.selectedIndex]?.dataset.type === "airport") {
+      reserveBtn.disabled = true;
+    }
   }
-}
 
-// Watch for input changes in airport section
-["change", "input"].forEach(evt => {
-  citySelect.addEventListener(evt, validateAirportForm);
-  airportName.addEventListener(evt, validateAirportForm);
-  document.getElementById("arriveDate").addEventListener(evt, validateAirportForm);
-  document.getElementById("departDate").addEventListener(evt, validateAirportForm);
-});
+  ["change", "input"].forEach(evt => {
+    citySelect.addEventListener(evt, validateAirportForm);
+    airportName.addEventListener(evt, validateAirportForm);
+    document.getElementById("arriveDate").addEventListener(evt, validateAirportForm);
+    document.getElementById("departDate").addEventListener(evt, validateAirportForm);
+  });
 
-// === VISUAL STATE SYNC (Universal for venue & airport) ===
-function updateButtonVisualState() {
-  if (!reserveBtn.disabled) {
-    reserveBtn.classList.add("active");
-    reserveBtn.style.backgroundColor = "#1f6351";
-    reserveBtn.style.opacity = "1";
-    reserveBtn.style.cursor = "pointer";
-  } else {
-    reserveBtn.classList.remove("active");
-    reserveBtn.style.backgroundColor = "#b0b0b0";
-    reserveBtn.style.opacity = "0.6";
-    reserveBtn.style.cursor = "not-allowed";
+  function updateButtonVisualState() {
+    if (!reserveBtn.disabled) {
+      reserveBtn.classList.add("active");
+      reserveBtn.style.backgroundColor = "#1f6351";
+      reserveBtn.style.opacity = "1";
+      reserveBtn.style.cursor = "pointer";
+    } else {
+      reserveBtn.classList.remove("active");
+      reserveBtn.style.backgroundColor = "#b0b0b0";
+      reserveBtn.style.opacity = "0.6";
+      reserveBtn.style.cursor = "not-allowed";
+    }
   }
-}
 
-// Listen to both venue and airport related fields
-["change", "input"].forEach(evt => {
-  category.addEventListener(evt, updateButtonVisualState);
-  eventList.addEventListener(evt, updateButtonVisualState);
-  citySelect.addEventListener(evt, updateButtonVisualState);
-  airportName.addEventListener(evt, updateButtonVisualState);
-  document.getElementById("arriveDate").addEventListener(evt, updateButtonVisualState);
-  document.getElementById("departDate").addEventListener(evt, updateButtonVisualState);
-});
+  ["change", "input"].forEach(evt => {
+    category.addEventListener(evt, updateButtonVisualState);
+    eventList.addEventListener(evt, updateButtonVisualState);
+    citySelect.addEventListener(evt, updateButtonVisualState);
+    airportName.addEventListener(evt, updateButtonVisualState);
+    document.getElementById("arriveDate").addEventListener(evt, updateButtonVisualState);
+    document.getElementById("departDate").addEventListener(evt, updateButtonVisualState);
+  });
 
-// Run once on load
-updateButtonVisualState();
+  updateButtonVisualState();
 
+  const radiusSelect = document.getElementById("radius");
+  const findBtn = document.getElementById("findBtn");
 
-// === NEARBY BUTTON VALIDATION ===
-const radiusSelect = document.getElementById("radius");
-const findBtn = document.getElementById("findBtn");
-
-function validateNearbyForm() {
-  const radius = radiusSelect.value;
-  // Enable button only when radius selected
-  if (radius && radius !== "Select Range") {
-    findBtn.disabled = false;
-    findBtn.classList.add("active");
-  } else {
-    findBtn.disabled = true;
-    findBtn.classList.remove("active");
+  function validateNearbyForm() {
+    const radius = radiusSelect.value;
+    if (radius && radius !== "Select Range") {
+      findBtn.disabled = false;
+      findBtn.classList.add("active");
+    } else {
+      findBtn.disabled = true;
+      findBtn.classList.remove("active");
+    }
   }
-}
 
-radiusSelect.addEventListener("change", validateNearbyForm);
+  radiusSelect.addEventListener("change", validateNearbyForm);
 
-findBtn.addEventListener("click", () => {
-  if (!findBtn.disabled) {
-    const radius = radiusSelect.value || 3;
-    // Redirect to Nearby page and pass radius in query
-    window.location.href = `nearby-free.html?radius=${radius}`;
-  }
-});
+  findBtn.addEventListener("click", () => {
+    if (!findBtn.disabled) {
+      const radius = radiusSelect.value || 3;
+      window.location.href = `nearby-free.html?radius=${radius}`;
+    }
+  });
 
-
-
-// --- Tabs logic ----------------------------------------------
-const reserveTab=document.getElementById('reserveTab');
-const nearbyTab=document.getElementById('nearbyTab');
-const reserveForm=document.getElementById('reserveForm');
-const nearbyForm=document.getElementById('nearbyForm');
-reserveTab.onclick=()=>{reserveForm.style.display='block';nearbyForm.style.display='none';reserveTab.classList.add('active');nearbyTab.classList.remove('active');};
-nearbyTab.onclick=()=>{reserveForm.style.display='none';nearbyForm.style.display='block';nearbyTab.classList.add('active');reserveTab.classList.remove('active');};
+  const reserveTab=document.getElementById('reserveTab');
+  const nearbyTab=document.getElementById('nearbyTab');
+  const reserveForm=document.getElementById('reserveForm');
+  const nearbyForm=document.getElementById('nearbyForm');
+  reserveTab.onclick=()=>{reserveForm.style.display='block';nearbyForm.style.display='none';reserveTab.classList.add('active');nearbyTab.classList.remove('active');};
+  nearbyTab.onclick=()=>{reserveForm.style.display='none';nearbyForm.style.display='block';nearbyTab.classList.add('active');reserveTab.classList.remove('active');};
 </script>
-
 
 </body>
 </html>

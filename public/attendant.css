@@ -1,0 +1,65 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #0f1f1c;
+  color: #eaf6f3;
+}
+
+.attendant-header {
+  padding: 16px;
+  background: #133a33;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.attendant-header h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+select {
+  padding: 6px;
+  font-size: 1rem;
+}
+
+.legend {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.confirmed { background: #2e8b57; }
+.arrived { background: #1e90ff; }
+.expired { background: #6b7280; }
+.invalid { background: #dc2626; }
+
+#reservationsList {
+  padding: 12px;
+}
+
+.reservation-card {
+  background: #162e2a;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.reservation-card h3 {
+  margin: 0 0 4px 0;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  opacity: 0.7;
+}

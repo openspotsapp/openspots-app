@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const userEmailEl = document.getElementById("userEmail");
   const userPhoneEl = document.getElementById("userPhone");
   const logoutBtn = document.getElementById("logoutBtn");
+  const switchAttendantBtn = document.getElementById("switchAttendant");
 
   (async () => {
     const profile = await resolveUserProfile();
@@ -60,5 +61,30 @@ document.addEventListener("DOMContentLoaded", () => {
   logoutBtn.addEventListener("click", async () => {
     await signOut(auth);
     window.location.href = "login.html";
+  });
+
+  switchAttendantBtn?.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const user = auth.currentUser;
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const operatorRef = doc(db, "operators", user.uid);
+    const operatorSnap = await getDoc(operatorRef);
+
+    if (!operatorSnap.exists()) {
+      alert("You are not registered as an attendant yet.");
+      return;
+    }
+
+    if (operatorSnap.data().is_active === false) {
+      alert("Your attendant access is inactive.");
+      return;
+    }
+
+    window.location.href = "attendant.html";
   });
 });

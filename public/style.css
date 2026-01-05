@@ -3195,3 +3195,20 @@ footer {
   }
 }
 
+.auth-modal.hidden { display: none; }
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.auth-modal-content {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 360px;
+  text-align: center;
+}

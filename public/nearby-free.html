@@ -14,6 +14,21 @@
 </head>
 <body>
 
+<script type="module">
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+  import { app } from "./firebase-init.js";
+
+  let isLoggedIn = false;
+  window.isLoggedIn = isLoggedIn;
+
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, (user) => {
+    isLoggedIn = !!user;
+    window.isLoggedIn = isLoggedIn;
+  });
+</script>
+
 <header class="details-header">
   <button class="back-btn" onclick="window.history.back()">← Back</button>
   <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="details-logo" />
@@ -57,6 +72,23 @@
   </div>
 </footer>
 
+<div id="authModal" class="auth-modal hidden">
+  <div class="auth-modal-content">
+    <h3>Sign up to continue</h3>
+    <p>
+      Create a free OpenSpots account to get directions, view spot details,
+      and reserve verified parking.
+    </p>
+
+    <div class="auth-actions">
+      <a href="login.html" class="btn-primary">Log In</a>
+      <a href="signup.html" class="btn-secondary">Create Account</a>
+    </div>
+
+    <button class="close-modal" onclick="closeAuthModal()">Not now</button>
+  </div>
+</div>
+
 <script>
 // ---------- Smart “Take Me Here” ----------
 function openDirections(lat, lng) {
@@ -65,6 +97,22 @@ function openDirections(lat, lng) {
     ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`
     : `https://maps.google.com/?daddr=${lat},${lng}&travelmode=driving`;
   window.open(url, "_blank");
+}
+
+function guardedDirections(lat, lng) {
+  if (!window.isLoggedIn) {
+    openAuthModal();
+    return;
+  }
+  openDirections(lat, lng);
+}
+
+function openAuthModal() {
+  document.getElementById("authModal").classList.remove("hidden");
+}
+
+function closeAuthModal() {
+  document.getElementById("authModal").classList.add("hidden");
 }
 
 // ---------- Sensors ----------
@@ -193,7 +241,7 @@ function initMap(userLat,userLng,radius){
       const msg=s.status==="open"
         ? `<div style="text-align:center;">
              <strong>Spot ${s.id} is OPEN</strong><br>(${distanceText})<br><br>
-             <button class="take-me-btn" onclick="openDirections(${s.lat},${s.lng})">
+             <button class="take-me-btn" onclick="guardedDirections(${s.lat},${s.lng})">
                Take Me Here
              </button>
            </div>`
@@ -202,7 +250,15 @@ function initMap(userLat,userLng,radius){
              <strong>Spot ${s.id} is OCCUPIED</strong><br>for ${s.duration||"N/A"}
            </div>`;
       const info=new google.maps.InfoWindow({content:msg});
-      marker.addListener("click",()=>{if(activeInfo)activeInfo.close();info.open(map,marker);activeInfo=info;});
+      marker.addListener("click",()=>{
+        if(!window.isLoggedIn){
+          openAuthModal();
+          return;
+        }
+        if(activeInfo)activeInfo.close();
+        info.open(map,marker);
+        activeInfo=info;
+      });
       if(s.status==="open")openCount++;
     }
   });
