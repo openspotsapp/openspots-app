@@ -62,12 +62,14 @@ async function loadVenues(venueRefs) {
 
 venueSelect.addEventListener("change", () => {
   if (unsubscribeReservations) unsubscribeReservations();
-  const venueId = venueSelect.value;
-  if (!venueId) return;
+  const selectedVenueId = venueSelect.value;
+  if (!selectedVenueId) return;
+
+  const venueRef = doc(db, "venues", selectedVenueId);
 
   const q = query(
     collection(db, "reservations"),
-    where("venue_id", "==", doc(db, "venues", venueId))
+    where("venue_id", "==", venueRef)
   );
 
   unsubscribeReservations = onSnapshot(q, renderReservations);
@@ -76,6 +78,8 @@ venueSelect.addEventListener("change", () => {
 async function renderReservations(snapshot) {
   reservationsList.innerHTML = "";
 
+  console.log("Reservations found:", snapshot.size);
+
   if (snapshot.empty) {
     reservationsList.innerHTML = `<p class="empty">No active reservations</p>`;
     return;
@@ -83,30 +87,39 @@ async function renderReservations(snapshot) {
 
   for (const docSnap of snapshot.docs) {
     const r = docSnap.data();
-    if (!r.start_time || !r.end_time) continue;
+    if (!r.start_time) continue;
 
-    const spotSnap = await getDocs(
-      query(
-        collection(db, "spots"),
-        where("spot_id", "==", r.spot_number),
-        where("venue_ref", "==", r.venue_id)
-      )
-    );
+    // derive end time safely if missing
+    const endTime =
+      r.end_time ??
+      new Date(r.start_time.toDate().getTime() + 60 * 60 * 1000); // +1 hour fallback
 
-    const spotDoc = spotSnap.docs[0];
-    const locationLink = spotDoc?.exists()
-      ? `https://www.google.com/maps?q=${spotDoc.data().location.latitude},${spotDoc.data().location.longitude}`
+    let spotDoc = null;
+
+    const spotRef =
+      r.spot_id ||        // NEW schema
+      r.spot_ref ||       // OLD data
+      null;
+
+    if (spotRef) {
+      const snap = await getDoc(spotRef);
+      if (snap.exists()) spotDoc = snap;
+    }
+    const location = spotDoc?.data()?.location;
+
+    const locationLink = location
+      ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
       : null;
 
-    const status = deriveStatus(r);
+    const status = deriveStatus(r, endTime);
 
     const card = document.createElement("div");
     card.className = `reservation-card ${status}`;
 
     card.innerHTML = `
       <div class="info">
-        <h3>Spot ${r.spot_number}</h3>
-        <p>${formatTime(r.start_time)} – ${formatTime(r.end_time)}</p>
+        <h3>Spot ${r.spot_label ?? spotDoc?.data()?.spot_id ?? "Unknown"}</h3>
+        <p>${formatTime(r.start_time)} – ${formatTime(endTime)}</p>
         ${locationLink ? `<a href="${locationLink}" target="_blank">📍 View Spot</a>` : ""}
       </div>
       <div class="status">
@@ -118,11 +131,14 @@ async function renderReservations(snapshot) {
   }
 }
 
-function deriveStatus(reservation) {
+function deriveStatus(reservation, endTimeOverride) {
   const now = new Date();
 
-  const start = reservation.start_time.toDate();
-  const end = reservation.end_time.toDate();
+  const start = reservation.start_time.toDate
+    ? reservation.start_time.toDate()
+    : new Date(reservation.start_time);
+  const endSource = endTimeOverride ?? reservation.end_time;
+  const end = endSource?.toDate ? endSource.toDate() : new Date(endSource);
 
   // DB-backed status wins
   if (reservation.status === "invalid") return "invalid";
