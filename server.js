@@ -159,6 +159,11 @@ app.get("/health", (req, res) => {
   res.status(200).send("ok");
 });
 
+// Keep-alive ping endpoint (Render)
+app.get("/ping", (req, res) => {
+  res.status(200).send("pong");
+});
+
 // Stripe success finalizer
 app.get("/stripe/success", async (req, res) => {
   try {
