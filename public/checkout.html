@@ -46,6 +46,8 @@
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get("event");
     const spotId = params.get("spot");
+    const venueId = params.get("venue");
+    const isPrivateVenue = !eventId;
 
     // normalize price
     const rawPrice = params.get("price");
@@ -63,28 +65,50 @@
     const looksLikeId = (value) =>
       typeof value === "string" && value.trim().length >= 6 && !/\s/.test(value);
 
-    let eventDisplay = meta.eventName || eventId;
-    let spotDisplay = meta.spotName || spotId;
+    let eventDisplay = meta.eventName || "-";
 
-    if (looksLikeId(eventId) && looksLikeId(spotId)) {
+    // Resolve EVENT name for event venues
+    if (!isPrivateVenue && eventId) {
       try {
-        const [eventSnap, spotSnap] = await Promise.all([
-          getDoc(doc(db, "events", eventId)),
-          getDoc(doc(db, "spots", spotId)),
-        ]);
-
+        const eventSnap = await getDoc(doc(db, "events", eventId));
         if (eventSnap.exists()) {
           const eventData = eventSnap.data();
-          eventDisplay = eventData.event_name || eventDisplay || eventId;
-        }
-
-        if (spotSnap.exists()) {
-          const spotData = spotSnap.data();
-          spotDisplay =
-            spotData.spot_id || spotData.name || spotDisplay || spotId;
+          eventDisplay =
+            eventData.name ||
+            eventData.event_name ||
+            eventData.title ||
+            "-";
         }
       } catch (err) {
-        console.error("Failed to load event/spot names", err);
+        console.error("Failed to load event name", err);
+        eventDisplay = "-";
+      }
+    }
+    let spotDisplay = "-";
+
+    if (isPrivateVenue) {
+      try {
+        const spotSnap = await getDoc(doc(db, "spots", spotId));
+        if (spotSnap.exists()) {
+          const spotData = spotSnap.data();
+          spotDisplay = spotData.spot_id || spotData.name || "-";
+        } else {
+          spotDisplay = "-";
+        }
+      } catch (err) {
+        console.error("Failed to load private spot", err);
+        spotDisplay = "-";
+      }
+    } else {
+      // ✅ EVENT VENUE → resolve via Firestore
+      try {
+        const spotSnap = await getDoc(doc(db, "spots", spotId));
+        if (spotSnap.exists()) {
+          const spotData = spotSnap.data();
+          spotDisplay = spotData.spot_id || spotData.name || spotId;
+        }
+      } catch (err) {
+        console.error("Failed to load event spot", err);
       }
     }
 
@@ -145,7 +169,13 @@
       <div><strong>Phone:</strong> ${normalizedUser.phone || "-"}</div>
       <div><strong>Vehicle:</strong> ${normalizedUser.vehicle || "-"}</div>
       <div><strong>License Plate:</strong> ${normalizedUser.plate || "-"}</div>
-      <div><strong>Event:</strong> ${eventDisplay || "-"}</div>
+
+      ${
+        !isPrivateVenue
+          ? `<div><strong>Event:</strong> ${eventDisplay || "-"}</div>`
+          : ""
+      }
+
       <div><strong>Spot:</strong> ${spotDisplay || "-"}</div>
       <div><strong>Price:</strong> $${finalPrice}</div>
     `;

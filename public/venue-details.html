@@ -34,10 +34,28 @@
     <img id="venueImage" class="venue-hero-img" src="" alt="Venue Image">
 
     <!-- Event Dropdown -->
-    <label class="form-label">Choose an event:</label>
-    <select id="eventSelect" class="form-input">
-      <option value="">Loading events...</option>
-    </select>
+    <div id="eventSection">
+      <div class="event-label">Choose an event:</div>
+      <select id="eventSelect" class="form-input">
+        <option value="">Loading events...</option>
+      </select>
+    </div>
+
+    <!-- Parking Size Dropdown (PRIVATE venues only) -->
+    <div id="sizeSection" style="display:none;">
+      <div id="spotTypeSection">
+        <label for="spotTypeSelect">Select parking type:</label>
+        <select id="spotTypeSelect">
+          <option value="">Select type...</option>
+          <option value="STANDARD">Standard</option>
+          <option value="PREMIUM">Premium</option>
+          <option value="EV">EV</option>
+          <option value="OVERSIZE">Oversize</option>
+          <option value="COMPACT">Compact</option>
+          <option value="HANDICAP">Handicap</option>
+        </select>
+      </div>
+    </div>
 
     <!-- MAP -->
     <div id="venue-det-map" class="venue-det-map"></div>

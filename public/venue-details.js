@@ -25,6 +25,7 @@ if (!venueId) {
 const venueNameEl = document.getElementById("venueName");
 const venueImageEl = document.getElementById("venueImage");
 const eventSelect = document.getElementById("eventSelect");
+const spotTypeSelect = document.getElementById("spotTypeSelect");
 const selectedSpotText = document.getElementById("selectedSpotText");
 const continueBtn = document.getElementById("continueBtn");
 
@@ -33,6 +34,7 @@ let markers = [];
 let selectedSpot = null;
 let selectedEventId = null;
 let selectedMarker = null;
+let isPrivateVenue = false;
 
 /* ---------- Map-only init ---------- */
 function initVenueMap(lat, lng) {
@@ -42,10 +44,13 @@ function initVenueMap(lat, lng) {
       center: { lat, lng },
       zoom: 18,
       mapTypeId: "satellite",
+      tilt: 0,
+      heading: 0,
       mapTypeControl: true,
       mapId: "8d193001f940fde3",
     }
   );
+
 }
 
 /* ============================
@@ -63,6 +68,19 @@ async function loadVenue() {
   const data = snap.data();
   venueNameEl.textContent = data.name;
   venueImageEl.src = data.image_url || "placeholder.jpg";
+  const isEventVenue = data.venue_type === "EVENT";
+  isPrivateVenue = data.venue_type === "PRIVATE";
+
+  document.getElementById("eventSection").style.display =
+    isEventVenue ? "block" : "none";
+
+  document.getElementById("sizeSection").style.display =
+    isPrivateVenue ? "block" : "none";
+
+  eventSelect.style.display = isEventVenue ? "block" : "none";
+  continueBtn.innerText = isEventVenue
+    ? "View Events & Reserve"
+    : "Reserve Parking & Continue";
 
   // INIT MAP IMMEDIATELY (NO EVENT NEEDED)
   if (data.location) {
@@ -70,6 +88,10 @@ async function loadVenue() {
       data.location.latitude,
       data.location.longitude
     );
+  }
+
+  if (!isPrivateVenue) {
+    loadEvents();
   }
 }
 
@@ -170,8 +192,6 @@ async function loadEvents() {
   });
 }
 
-loadEvents();
-
 /* ============================
     3) WHEN EVENT SELECTED → LOAD SPOTS
 ============================ */
@@ -186,6 +206,23 @@ eventSelect.addEventListener("change", async () => {
   loadSpots(selectedEventId);
 });
 
+spotTypeSelect.addEventListener("change", async () => {
+  const selectedType = spotTypeSelect.value;
+
+  // Reset UI
+  selectedSpot = null;
+  selectedSpotText.textContent = "No spot selected";
+  continueBtn.disabled = true;
+
+  // Clear existing markers
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+
+  if (!selectedType) return; // user chose "Select type..."
+
+  loadSpotsByType(selectedType);
+});
+
 /* ============================
     4) LOAD SPOTS & PLOT ON MAP
 ============================ */
@@ -194,6 +231,37 @@ async function loadSpots(eventId) {
     collection(db, "spots"),
     where("event_ref", "==", doc(db, "events", eventId)),
     where("venue_ref", "==", doc(db, "venues", venueId)),
+    where("is_active", "==", true)
+  );
+
+  const snap = await getDocs(q);
+
+  const spots = [];
+  snap.forEach((doc) => spots.push({ id: doc.id, ...doc.data() }));
+
+  renderSpotMarkers(spots);
+}
+
+async function loadSpotsByVenue() {
+  const q = query(
+    collection(db, "spots"),
+    where("venue_ref", "==", doc(db, "venues", venueId)),
+    where("is_active", "==", true)
+  );
+
+  const snap = await getDocs(q);
+
+  const spots = [];
+  snap.forEach((doc) => spots.push({ id: doc.id, ...doc.data() }));
+
+  renderSpotMarkers(spots);
+}
+
+async function loadSpotsByType(spotType) {
+  const q = query(
+    collection(db, "spots"),
+    where("venue_ref", "==", doc(db, "venues", venueId)),
+    where("spot_type", "==", spotType),
     where("is_active", "==", true)
   );
 
@@ -291,17 +359,22 @@ function renderSpotMarkers(spots) {
     6) CONTINUE BUTTON
 ============================ */
 continueBtn.addEventListener("click", async () => {
-  if (!selectedSpot || !selectedEventId) return;
+  if (!selectedSpot) return;
 
   const user = auth.currentUser;
 
-  if (user) {
-    // LOGGED-IN USER → SKIP DETAILS
+  // EVENT VENUE FLOW
+  if (!isPrivateVenue) {
+    if (!selectedEventId) return;
+
+    const baseUrl = user ? "checkout.html" : "details.html";
     window.location.href =
-      `checkout.html?event=${selectedEventId}&spot=${selectedSpot.id}&venue=${venueId}`;
-  } else {
-    // GUEST USER → GO TO DETAILS FORM
-    window.location.href =
-      `details.html?event=${selectedEventId}&spot=${selectedSpot.id}&venue=${venueId}`;
+      `${baseUrl}?event=${selectedEventId}&spot=${selectedSpot.id}&venue=${venueId}`;
+    return;
   }
+
+  // PRIVATE VENUE FLOW
+  const baseUrl = user ? "checkout.html" : "details.html";
+  window.location.href =
+    `${baseUrl}?spot=${selectedSpot.id}&venue=${venueId}`;
 });

@@ -43,6 +43,33 @@ function renderVenues(list) {
   venueListEl.innerHTML = "";
 
   list.forEach((v) => {
+    const rawType = v.venue_type;
+
+    const venueType =
+      typeof rawType === "string"
+        ? rawType.replace("VenueType.", "")
+        : rawType?.name || rawType?.enumValue || "";
+
+    let priceText = "";
+    let availabilityText = "";
+
+    if (venueType === "PRIVATE") {
+      priceText = v.price_per_week
+        ? `$${v.price_per_week}/week`
+        : v.price_per_day
+        ? `$${v.price_per_day}/day`
+        : "Contact for pricing";
+
+      availabilityText = `${v.reservable_spots_available ?? 0} available`;
+    } else {
+      // EVENT + any other venue types
+      priceText = v.price_per_hour
+        ? `$${v.price_per_hour}`
+        : "Pricing varies";
+
+      availabilityText = `${v.available_spots ?? 0}`;
+    }
+
     const card = document.createElement("div");
     card.className = "venue-card";
     card.innerHTML = `
@@ -54,8 +81,8 @@ function renderVenues(list) {
       </div>
 
       <div class="venue-meta">
-        <div class="venue-price">$${v.price_per_hour}</div>
-        <div class="venue-spots">${v.available_spots}</div>
+        <div class="venue-price">${priceText}</div>
+        <div class="venue-spots">${availabilityText}</div>
       </div>
     `;
 
