@@ -3228,3 +3228,144 @@ footer {
   max-width: 360px;
   text-align: center;
 }
+
+/* ===============================
+   INLINE CALENDAR (VENUE DETAILS)
+=============================== */
+
+.calendar {
+  width: 100%;
+  margin-top: 12px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+/* Header */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.calendar-header span {
+  font-weight: 700;
+  font-size: 16px;
+  color: #1f6351;
+}
+
+.calendar-header button {
+  background: #1f6351;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  cursor: pointer;
+  margin: 10px;
+}
+
+/* Weekdays */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b8f83;
+  margin-bottom: 6px;
+}
+
+/* Days grid */
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+/* Day cell */
+.calendar-day {
+  height: 44px;
+  border-radius: 10px;
+  background: #eaf4f1;
+  color: #1f6351;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+  background: #cce6de;
+}
+
+/* Selected states */
+.calendar-day.selected {
+  background: #1f6351;
+  color: white;
+}
+
+.calendar-day.in-range {
+  background: #48d9b0;
+  color: #083d2b;
+}
+
+/* Disabled */
+.calendar-day.disabled {
+  background: #f0f0f0;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .calendar {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .calendar-header span {
+    font-size: 15px;
+  }
+
+  .calendar-header button {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .calendar-weekdays {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .calendar-days {
+    gap: 6px;
+  }
+
+  .calendar-day {
+    height: 40px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+}
+
+#prevMonth,
+#nextMonth {
+  display: flex;
+  align-items: center;      /* vertical center */
+  justify-content: center;  /* horizontal center */
+  line-height: 1;           /* kill font baseline offset */
+  padding-bottom: 2px;      /* optional micro-nudge */
+  padding-top: 1px;
+}
+
+#prevMonth.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+

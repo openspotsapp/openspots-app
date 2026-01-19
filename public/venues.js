@@ -26,10 +26,13 @@ async function loadVenues() {
   const q = query(collection(db, "venues"), orderBy("name"));
   const snapshot = await getDocs(q);
 
-  allVenues = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  allVenues = snapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    // 🔒 TEMP: hide Honey Bee RV Storage
+    .filter(v => v.name !== "Honey Bee RV Storage");
 
   renderVenues(allVenues);
 }

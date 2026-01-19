@@ -63,6 +63,37 @@
     <!-- Selected Spot Text -->
     <p id="selectedSpotText" class="selected-spot">No spot selected</p>
 
+    <!-- Date Selection (PRIVATE venues only) -->
+    <div id="dateSection" style="display:none;">
+      <h4>Select dates by using the calendar below:</h4>
+
+      <div class="date-range-inputs">
+        <input type="text" id="startDate" placeholder="Start Date" readonly />
+        <span>→</span>
+        <input type="text" id="endDate" placeholder="End Date" readonly />
+      </div>
+
+      <!-- Inline Calendar -->
+      <div id="calendarContainer" class="calendar">
+        <div class="calendar-header">
+          <button id="prevMonth">‹</button>
+          <span id="calendarMonth"></span>
+          <button id="nextMonth">›</button>
+        </div>
+
+        <div class="calendar-weekdays">
+          <div>Sun</div><div>Mon</div><div>Tue</div>
+          <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+
+        <div id="calendarDays" class="calendar-days"></div>
+      </div>
+
+      <p id="selectedDatesText" class="selected-dates">
+        No dates selected
+      </p>
+    </div>
+
     <!-- Reserve Button -->
     <button id="continueBtn" class="primary-btn" disabled>
       Reserve Parking & Continue
