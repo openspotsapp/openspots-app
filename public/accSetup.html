@@ -16,7 +16,7 @@
   <script type="module">
     import { getAuth, onAuthStateChanged } from
       "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { doc, setDoc } from
+    import { doc, getDoc, setDoc } from
       "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
     import { app, db } from "./firebase-init.js";
 
@@ -63,7 +63,19 @@
         setupComplete: true
       }, { merge: true });
 
-      window.location.href = "nearby.html";
+      try {
+        const snap = await getDoc(doc(db, "users", currentUser.uid));
+        const data = snap.exists() ? snap.data() : {};
+
+        if (data.hasPaymentMethod === true) {
+          window.location.href = "nearby.html";
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to check payment status:", err);
+      }
+
+      window.location.href = "add-payment.html";
     }
 
     window.completeSetup = completeSetup;

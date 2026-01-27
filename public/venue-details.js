@@ -48,6 +48,24 @@ let currentCalendarYear = null;
 let activeReservations = [];
 let MAX_BOOKING_DAYS_AHEAD = 90; // fallback default
 
+async function enforcePaymentMethod(user) {
+  if (!user) return true;
+
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    const data = snap.exists() ? snap.data() : {};
+
+    if (data.hasPaymentMethod === true) {
+      return true;
+    }
+  } catch (err) {
+    console.error("Failed to check payment status:", err);
+  }
+
+  window.location.href = "add-payment.html";
+  return false;
+}
+
 /* ---------- Map-only init ---------- */
 function initVenueMap(lat, lng) {
   map = new google.maps.Map(
@@ -707,6 +725,8 @@ continueBtn.addEventListener("click", async () => {
   if (!selectedSpot) return;
 
   const user = auth.currentUser;
+  const canProceed = await enforcePaymentMethod(user);
+  if (!canProceed) return;
 
   // EVENT VENUE FLOW
   if (!isPrivateVenue) {

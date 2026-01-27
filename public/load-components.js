@@ -25,48 +25,23 @@ fetch("navbar.html")
 
       // Notify the page that navbar is ready
       document.dispatchEvent(new Event("navbarLoaded"));
-
-      const centerBtn = document.querySelector(".nav-center");
-
-      if (centerBtn) {
-        centerBtn.addEventListener("click", () => {
-          const currentPage = window.location.pathname.split("/").pop();
-
-          // If user is already on nearby.html → open range menu
-          if (currentPage === "nearby.html") {
-            window.dispatchEvent(new Event("openRangePopup"));
-            return;
-          }
-
-          // Otherwise → go to nearby.html
-          window.location.href = "nearby.html";
-        });
-      }
     }
   });
 
-// Additional center-button handler (DOM ready)
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("navbarLoaded", () => {
+  const centerBtn = document.querySelector(".nav-center");
 
-  const navCenter = document.getElementById("navCenterBtn");
+  if (!centerBtn) return;
 
-  if (navCenter) {
-    navCenter.addEventListener("click", (e) => {
-      e.preventDefault(); // stop accidental page reload
+  centerBtn.onclick = () => {
+    const isNearby = window.location.pathname.includes("nearby.html");
 
-      const onNearby = window.location.pathname.includes("nearby.html");
-
-      if (onNearby) {
-        console.log("Center button clicked ON nearby page → open range popup.");
-
-        document.getElementById("radiusPopup").style.display = "block";
-      } else {
-        console.log("Center button clicked on another page → navigate to nearby.");
-        window.location.href = "nearby.html";
-      }
-    });
-  }
-
+    if (isNearby) {
+      window.dispatchEvent(new Event("openRangePopup"));
+    } else {
+      window.location.href = "nearby.html";
+    }
+  };
 });
 
 document.addEventListener("DOMContentLoaded", () => {

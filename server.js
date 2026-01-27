@@ -69,6 +69,35 @@ app.post(
       case "checkout.session.completed": {
         const session = event.data.object;
 
+        if (session.mode === "setup") {
+          const customerId = session.customer;
+          const setupIntentId = session.setup_intent;
+
+          // Retrieve SetupIntent
+          const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+
+          const paymentMethod = setupIntent.payment_method;
+
+          // Get Firebase user via Stripe metadata
+          const customer = await stripe.customers.retrieve(customerId);
+          const uid = customer.metadata.uid;
+
+          if (!uid || !paymentMethod) {
+            console.error("Missing uid or payment method");
+            return;
+          }
+
+          // Mark user as payment-ready
+          await db.collection("users").doc(uid).update({
+            hasPaymentMethod: true,
+            defaultPaymentMethod: paymentMethod,
+            payment_updated_at: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          console.log("✅ Payment method saved for user:", uid);
+          return;
+        }
+
         const { userId, eventId, spotId } = session.metadata;
 
         console.log("🧠 Phase 3: Finalizing reservation", {
@@ -178,7 +207,7 @@ app.get("/stripe/success", async (req, res) => {
 
     // TODO (next step): save reservation using session.metadata
 
-    res.redirect("/my-spots.html");
+    res.redirect(`${process.env.BASE_URL}/my-spots.html`);
   } catch (err) {
     console.error("Stripe success error:", err);
     res.status(500).send("Stripe success failed");
@@ -273,6 +302,52 @@ app.post("/create-checkout-session", async (req, res) => {
     } catch (error) {
         console.error("Stripe session error:", error);
         res.status(500).json({ error: "Failed to create checkout session" });
+    }
+});
+
+// Create Stripe Setup session
+app.post("/create-setup-session", async (req, res) => {
+    try {
+        const { uid, email } = req.body;
+
+        if (!uid || !email) {
+            return res.status(400).json({ error: "Missing uid or email" });
+        }
+
+        // 1. Create or retrieve Stripe customer
+        let customer;
+
+        // Optional: look up user in Firestore if you already store stripeCustomerId
+        const userSnap = await admin.firestore().collection("users").doc(uid).get();
+
+        if (userSnap.exists && userSnap.data().stripeCustomerId) {
+            customer = await stripe.customers.retrieve(
+                userSnap.data().stripeCustomerId
+            );
+        } else {
+            customer = await stripe.customers.create({
+                email,
+                metadata: { uid },
+            });
+
+            await admin.firestore().collection("users").doc(uid).update({
+                stripeCustomerId: customer.id,
+            });
+        }
+
+        // 2. Create Stripe Checkout session in SETUP mode
+        const session = await stripe.checkout.sessions.create({
+            mode: "setup",
+            customer: customer.id,
+            payment_method_types: ["card"],
+            success_url: `${process.env.BASE_URL}/payment-success.html`,
+            cancel_url: `${process.env.BASE_URL}/add-payment.html`,
+        });
+
+        res.json({ sessionId: session.id });
+    } catch (err) {
+        console.error("Setup session error:", err);
+        res.status(500).json({ error: "Failed to create setup session" });
     }
 });
 

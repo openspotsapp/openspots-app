@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Success | OpenSpots</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="payment-success.css" />
+</head>
+<body class="page-bg">
+  <main class="payment-success-container">
+    <section class="payment-success-card">
+      <div class="payment-success-icon">✓</div>
+      <h1 class="payment-success-title">Payment method saved</h1>
+      <p class="payment-success-subtitle">
+        You are all set. Redirecting you to the next step...
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const pendingSpot = sessionStorage.getItem("spotId");
+
+    if (pendingSpot) {
+      window.location.href = "./confirm-spot.html";
+    } else {
+      window.location.href = "./nearby.html";
+    }
+  </script>
+</body>
+</html>

@@ -15,35 +15,6 @@
 
 <body class="page-bg">
 
-  <script type="module">
-    import { getAuth, onAuthStateChanged } from
-      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { doc, getDoc } from
-      "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
-    import { app, db } from "./firebase-init.js";
-
-    const auth = getAuth(app);
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        // Not logged in → force login
-        window.location.replace("/login.html");
-        return;
-      }
-
-      try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const data = userDoc.data();
-
-        if (!data || data.setupComplete === false) {
-          window.location.href = "accSetup.html";
-        }
-      } catch (err) {
-        console.error("Failed to verify setup completion", err);
-      }
-    });
-  </script>
-
   <!-- HEADER (Dynamic title injected by JS) -->
   <div id="header"></div>
   <div data-page-title="FIND AN OPEN SPOT"></div>
@@ -91,8 +62,13 @@
     </div>
 
       <div class="nearby-info">
-      <h2 id="infoTextUser">Loading Open Street Spots...</h2>
+      <h2 id="infoTextUser">Loading Open Spots...</h2>
       </div>
+
+    <div id="infoMicro" class="info-micro">
+      <span class="info-icon">ℹ️</span>
+      <span id="infoMicroText"></span>
+    </div>
 
     <!-- INFO CARD -->
     <div id="nearbyPopup" class="nearby-popup" style="display:none;">
@@ -109,90 +85,30 @@
 
   <!-- NAVIGATION BAR -->
   <div id="navbar"></div>
+  <div id="navHint" class="nav-hint">Tap here to find nearby Open Spots</div>
 
   <!-- Load Header + Navbar -->
   <script src="load-components.js"></script>
 
   <!-- Google Maps (replace YOUR_KEY with your key) -->
   <script 
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnNTs3_DlvbUa4bNcZktr_gxdAj_AIZNs&callback=mapsLoaded" 
-    async 
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnNTs3_DlvbUa4bNcZktr_gxdAj_AIZNs&callback=initMap" 
     defer>
   </script>
 
-  <script>
-    let tooltipBubble;
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { app } from "./firebase-init.js";
 
-    function hideTooltip() {
-      if (tooltipBubble && tooltipBubble.parentNode) {
-        tooltipBubble.remove();
-        tooltipBubble = null;
-      }
-    }
-
-    // Wait until navbar is fully loaded
-    document.addEventListener("navbarLoaded", () => {
-
-      const navCenter = document.querySelector(".nav-center");
-
-      // Add glow on first visit
-      navCenter.classList.add("glow");
-
-      // Tooltip
-      tooltipBubble = document.createElement("div");
-      tooltipBubble.className = "tooltip-bubble";
-      tooltipBubble.innerText = "Tap here to find nearby spots.";
-      document.body.appendChild(tooltipBubble);
-
-      function hideNearbyTip() {
-        if (tooltipBubble) {
-          tooltipBubble.style.display = "none";
-        }
-      }
-      window.hideNearbyTip = hideNearbyTip;
-
-      // Hide bubble whenever user interacts
-      document.addEventListener("click", hideNearbyTip);
-      if (map) {
-        map.addListener("click", hideNearbyTip);
-      }
-
-      // LISTEN FOR THE RANGE POPUP REQUEST
-      window.addEventListener("openRangePopup", () => {
-        navCenter.classList.remove("glow");
-        hideTooltip();
-        showRangePopup();
-      });
-
-      // Hide card until used
-      document.getElementById("spotInfo").style.display = "none";
-    });
-  </script>
-
-  <script>
-    const btn = document.getElementById("nearbyButton");
-
-    if (btn) {
-      btn.addEventListener("click", function () {
-          btn.classList.remove("neon-pulse");
-      });
-    }
-  </script>
-
-  <script>
-    // Google Maps calls this automatically once loaded
-    function mapsLoaded() {
-      // After Maps loads, THEN do fallback draw
-      initMap(29.76295, -95.36225, radius);
-
-      // Then attempt real geolocation
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          pos => initMap(pos.coords.latitude, pos.coords.longitude, radius),
-          () => {} // ignore error, fallback already on screen
-        );
-      }
-    }
+    const db = getFirestore();
 
     let map;
     let userMarker;
@@ -201,6 +117,46 @@
     let selectedPulse = null;
     const AVAILABLE_ICON = "assets/Facebook Profile Picture.png";
     const OCCUPIED_ICON = "assets/RED MARKER ICON.png";
+    const markers = [];
+    window.map = null;
+    let currentUserLat = null;
+    let currentUserLng = null;
+    let currentRadiusMiles = null;
+    let userLatLng = null;
+
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        // Not logged in → force login
+        window.location.replace("/login.html");
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const data = userDoc.data();
+
+        if (!data || data.setupComplete === false) {
+          window.location.href = "accSetup.html";
+        }
+      } catch (err) {
+        console.error("Failed to verify setup completion", err);
+      }
+    });
+
+    document.addEventListener("navbarLoaded", () => {
+      const card = document.getElementById("spotInfo");
+      if (card) card.style.display = "none";
+    });
+
+    const btn = document.getElementById("nearbyButton");
+
+    if (btn) {
+      btn.addEventListener("click", function () {
+          btn.classList.remove("neon-pulse");
+      });
+    }
 
     // ---------- Smart “Take Me Here” ----------
     function openDirections(lat, lng) {
@@ -211,93 +167,267 @@
       window.open(url, "_blank");
     }
 
-    const sensors = [
-      { id:"S01", lat:29.76226054832702, lng:-95.36212280432228, status:"open" },
-      { id:"S02", lat:29.76230475180377, lng:-95.36209556865639, status:"open" },
-      { id:"S03", lat:29.762352247496768, lng:-95.36205844992847, status:"open" },
-      { id:"S04", lat:29.762410564762465, lng:-95.36200593576743, status:"occupied", duration:"18 min" },
-      { id:"S05", lat:29.762473726819167, lng:-95.3619570576147, status:"open" },
-      { id:"S06", lat:29.76252746627378, lng:-95.36190880180405, status:"occupied", duration:"42 min" },
-      { id:"S07", lat:29.762577818558047, lng:-95.36186929811336, status:"open" },
-      { id:"S08", lat:29.762622766267004, lng:-95.36184461128676, status:"open" },
-      { id:"S09", lat:29.762887310283162, lng:-95.36192038182799, status:"open" },
-      { id:"S10", lat:29.762908316015324, lng:-95.36196682790262, status:"open" },
-      { id:"S11", lat:29.762940532305382, lng:-95.36202062066634, status:"open" },
-      { id:"S12", lat:29.762967178806313, lng:-95.36206063666444, status:"open" },
-      { id:"S13", lat:29.76299752714372, lng:-95.36211101340372, status:"occupied", duration:"33 min" },
-      { id:"S14", lat:29.76304015029939, lng:-95.36218654393495, status:"occupied", duration:"3 min" },
-      { id:"S15", lat:29.763064037821447, lng:-95.3622223537026, status:"open" },
-      { id:"S16", lat:29.763093612445807, lng:-95.36227637719348, status:"open" },
-      { id:"S17", lat:29.76312476328195, lng:-95.36232597172933, status:"open" },
-      { id:"S18", lat:29.763068088689707, lng:-95.36258403358214, status:"occupied", duration:"54 min" },
-      { id:"S19", lat:29.76301752939993, lng:-95.36262563120994, status:"occupied", duration:"24 min" },
-      { id:"S20", lat:29.762955488106922, lng:-95.36267310880152, status:"open" },
-      { id:"S21", lat:29.762904741170395, lng:-95.36271456046416, status:"open" },
-      { id:"S22", lat:29.762865138603185, lng:-95.36275983157934, status:"open" },
-      { id:"S23", lat:29.762807237686737, lng:-95.36278765000267, status:"occupied", duration:"11 min" },
-      { id:"S24", lat:29.76276570883219, lng:-95.36282453367559, status:"occupied", duration:"22 min" },
-      { id:"S25", lat:29.762724934781865, lng:-95.3628574035797, status:"open" },
-      { id:"S26", lat:29.762474733129782, lng:-95.36284649957551, status:"open" },
-      { id:"S27", lat:29.762450982548334, lng:-95.36280331506943, status:"open" },
-      { id:"S28", lat:29.762429642068785, lng:-95.36277173986521, status:"open" },
-      { id:"S29", lat:29.762413875587047, lng:-95.36274594729818, status:"open" },
-      { id:"S30", lat:29.76239451131272, lng:-95.36271148956351, status:"open" },
-      { id:"S31", lat:29.762361622935014, lng:-95.36265793216539, status:"occupied", duration:"1 min" },
-      { id:"S32", lat:29.762334428947266, lng:-95.36261242266573, status:"occupied", duration:"9 min" },
-      { id:"S33", lat:29.7622994125385, lng:-95.36255302573032, status:"open" },
-      { id:"S34", lat:29.762280959060643, lng:-95.36252258062797, status:"open" },
-      { id:"S35", lat:29.76224131660227, lng:-95.36245710592168, status:"open" },
-      { id:"S36", lat:29.76221832256876, lng:-95.3624245575995, status:"open" }
-    ];
+    function showNavHint() {
+      const hint = document.getElementById("navHint");
+      if (!hint) return;
 
-    // RANGE POPUP LOGIC
-    function showRangePopup() {
-      document.getElementById("rangePopup").style.display = "block";
+      hint.style.display = "block";
+
+      setTimeout(() => {
+        hint.style.display = "none";
+      }, 5000);
     }
 
-// =============================
-// RANGE POPUP → RADIUS REDIRECT
-// =============================
-document.querySelectorAll(".range-option").forEach(option => {
-    option.addEventListener("click", () => {
-        const radius = option.dataset.range;
-        window.location.href = `nearby.html?radius=${radius}`;
-    });
-});
+    function showInfoMicro(message, autoHide = true) {
+      const box = document.getElementById("infoMicro");
+      const text = document.getElementById("infoMicroText");
+      if (!box || !text) return;
 
-    function showNearbyPopup(rangeSelected) {
-      const popup = document.getElementById("nearbyPopup");
-      popup.style.display = "block";
-      setTimeout(() => {
-        popup.style.display = "none";
-      }, 2500);
+      text.textContent = message;
+      box.classList.remove("hide");
+      box.classList.add("show");
+
+      if (autoHide) {
+        clearTimeout(box._hideTimer);
+        box._hideTimer = setTimeout(() => {
+          box.classList.remove("show");
+          box.classList.add("hide");
+        }, 4200);
+      }
+    }
+
+    const radiusPopup = document.getElementById("radiusPopup");
+
+    window.addEventListener("openRangePopup", () => {
+      if (!radiusPopup) return;
+      radiusPopup.style.display = "block";
+    });
+
+    if (radiusPopup) {
+      radiusPopup.addEventListener("click", (e) => {
+        const radius = e.target.dataset.radius;
+        if (!radius) return;
+
+        radiusPopup.style.display = "none";
+        fetchNearbySpots(Number(radius));
+      });
+    }
+
+    function getDistanceMiles(aLat, aLng, bLat, bLng) {
+      const R = 3958.8;
+      const dLat = (bLat - aLat) * Math.PI / 180;
+      const dLng = (bLng - aLng) * Math.PI / 180;
+
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(aLat * Math.PI / 180) *
+        Math.cos(bLat * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function updateInfoText(count, radiusMiles, isFallback) {
+      const infoText = document.getElementById("infoTextUser");
+      infoText.textContent = isFallback
+        ? `Displaying ${count} Open Spots`
+        : count > 0
+          ? `Displaying ${count} Open Spots within ${radiusMiles} miles of your location`
+          : "Displaying 0 Open Spots";
+    }
+
+    function clearMarkers() {
+      markers.forEach(marker => marker.setMap(null));
+      markers.length = 0;
+    }
+
+    function showSpots(spots, isFallback = false) {
+      clearSelected();
+      clearMarkers();
+
+      spots.forEach(spot => {
+        addMarker({
+          lat: spot.lat,
+          lng: spot.lng,
+          available: true,
+          meta: spot.meta || spot
+        });
+      });
+
+      updateInfoText(spots.length, currentRadiusMiles, isFallback);
+    }
+
+    function panToSpots(spots) {
+      const bounds = new google.maps.LatLngBounds();
+      spots.forEach(spot => {
+        bounds.extend({ lat: spot.lat, lng: spot.lng });
+      });
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds);
+      }
+    }
+
+    async function showRiverOaksFallback() {
+      const riverOaksCenter = { lat: 29.7394, lng: -95.4639 };
+
+      map.panTo(riverOaksCenter);
+      map.setZoom(10);
+
+      const riverOaksSpots = [];
+      const collections = ["private_metered_parking", "city_parking"];
+
+      for (const col of collections) {
+        const snap = await getDocs(collection(db, col));
+        snap.forEach(doc => {
+          const d = doc.data();
+          if (!d.location_name) return;
+          if (!d.location_name.toLowerCase().includes("river oaks")) return;
+
+          let lat, lng;
+
+          // Firestore GeoPoint (FlutterFlow default)
+          if (d.geo?.latitude != null && d.geo?.longitude != null) {
+            lat = d.geo.latitude;
+            lng = d.geo.longitude;
+          }
+
+          // Backward compatibility (optional, safe)
+          else if (d.lat != null && d.lng != null) {
+            lat = Number(d.lat);
+            lng = Number(d.lng);
+          }
+
+          if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+          riverOaksSpots.push({ ...d, id: doc.id, lat, lng });
+        });
+      }
+
+      showSpots(riverOaksSpots, true);
+      showInfoMicro(`0 Open Spots found within ${currentRadiusMiles} miles of your location. Showing River Oaks Mall parking.`);
+      panToSpots(riverOaksSpots);
+    }
+
+    async function fetchNearbySpots(radiusMiles) {
+      if (!userLatLng) return;
+      currentRadiusMiles = radiusMiles;
+
+      const results = [];
+      const collections = ["private_metered_parking", "city_parking"];
+
+      for (const col of collections) {
+        const snap = await getDocs(collection(db, col));
+        snap.forEach(doc => {
+          const d = doc.data();
+
+          let lat, lng;
+
+          // Firestore GeoPoint (FlutterFlow default)
+          if (d.geo?.latitude != null && d.geo?.longitude != null) {
+            lat = d.geo.latitude;
+            lng = d.geo.longitude;
+          }
+
+          // Backward compatibility (optional, safe)
+          else if (d.lat != null && d.lng != null) {
+            lat = Number(d.lat);
+            lng = Number(d.lng);
+          }
+
+          if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+          const distance = getDistanceMiles(
+            userLatLng.lat,
+            userLatLng.lng,
+            lat,
+            lng
+          );
+
+          const isAvailable =
+            d.status === undefined ||
+            d.status === "available" ||
+            d.available === true;
+
+          if (distance <= radiusMiles && isAvailable) {
+            results.push({ ...d, id: doc.id, lat, lng });
+          }
+        });
+      }
+
+      if (results.length) {
+        showSpots(results, false);
+        panToSpots(results);
+      } else {
+        await showRiverOaksFallback();
+      }
+    }
+
+    function addMarker(spot) {
+      const isAvailable = spot.available !== false;
+      const marker = new google.maps.Marker({
+        position: { lat: spot.lat, lng: spot.lng },
+        map: map,
+        icon: {
+          url: isAvailable ? AVAILABLE_ICON : OCCUPIED_ICON,
+          scaledSize: new google.maps.Size(20, 20)
+        }
+      });
+
+      marker.spot = spot;
+      markers.push(marker);
+
+      marker.addListener("click", () => {
+        if (window.hideNearbyTip) {
+          window.hideNearbyTip();
+        }
+        clearSelected();
+
+        marker.setIcon({
+          url: isAvailable ? AVAILABLE_ICON : OCCUPIED_ICON,
+          scaledSize: new google.maps.Size(38, 38)
+        });
+        selectedMarker = marker;
+
+        showSpotCard(spot);
+      });
     }
 
     function showSpotCard(spot) {
       const card = document.getElementById("spotInfo");
-      document.getElementById("spotTitle").innerText = spot.title;
-      document.getElementById("spotDetails").innerHTML = `
-        ${spot.address}<br>
-        ${spot.hours}
+      const title = document.getElementById("spotTitle");
+      const details = document.getElementById("spotDetails");
+      const navBtn = document.getElementById("navigateBtn");
+      const meta = spot.meta || {};
+
+      title.innerText = meta.location_name || "Parking Spot";
+      details.innerHTML = `
+        ${meta.zone_number ? `Zone ${meta.zone_number}<br>` : ""}
+        ${meta.rate_per_hour != null ? `$${meta.rate_per_hour}/hr<br>` : ""}
+        ${meta.max_duration_mins ? `${meta.max_duration_mins} min max` : ""}
       `;
+      navBtn.innerText = "NAVIGATE";
+      navBtn.className = "navigate-btn";
+      navBtn.disabled = false;
+      navBtn.onclick = () => openDirections(spot.lat, spot.lng);
 
       card.style.display = "block";
       card.classList.add("show");
     }
 
-    function addMarker(spot) {
-      const marker = new google.maps.Marker({
-        position: { lat: spot.lat, lng: spot.lng },
-        map: map,
-        icon: {
-          url: spot.status === "open" ? AVAILABLE_ICON : OCCUPIED_ICON,
-          scaledSize: new google.maps.Size(40, 40)
-        }
-      });
-
-      marker.addListener("click", () => {
-        showSpotCard(spot);
-      });
+    function clearSelected() {
+      if (selectedMarker) {
+        const isAvailable = selectedMarker.spot.available !== false;
+        selectedMarker.setIcon({
+          url: isAvailable ? AVAILABLE_ICON : OCCUPIED_ICON,
+          scaledSize: new google.maps.Size(20, 20)
+        });
+        selectedMarker = null;
+      }
+      if (selectedPulse) {
+        selectedPulse.setMap(null);
+        selectedPulse = null;
+      }
+      document.getElementById("spotInfo").classList.remove("show");
     }
 
     function startPulse(map, position) {
@@ -323,40 +453,40 @@ document.querySelectorAll(".range-option").forEach(option => {
       return pulse;
     }
 
-    // ---------- Utils ----------
-    function distanceMiles(aLat,aLng,bLat,bLng){
-      const R=3958.8;
-      const dLat=(bLat-aLat)*Math.PI/180;
-      const dLon=(bLng-aLng)*Math.PI/180;
-      const aa=Math.sin(dLat/2)**2+
-                Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*
-                Math.sin(dLon/2)**2;
-      return R*2*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa));
-    }
-    function niceMiles(mi){return mi>=10?mi.toFixed(1):mi>=1?mi.toFixed(2):Math.max(0.01,mi).toFixed(2);}
-
-    function centerChoice(userLat, userLng) {
-      const nearest = sensors.reduce((p, c) =>
-        distanceMiles(userLat, userLng, c.lat, c.lng) <
-        distanceMiles(userLat, userLng, p.lat, p.lng)
-          ? c
-          : p
-      );
-
-      const dist = distanceMiles(userLat, userLng, nearest.lat, nearest.lng);
-
-      if (dist > 10) {
-        // Use inside-map popup, not alert()
-        const popup = document.getElementById("nearbyPopup");
-        popup.textContent = "You're outside the OpenSpots coverage area. Showing Downtown Houston sensors.";
-        popup.style.display = "block";
-
-        setTimeout(() => popup.style.display = "none", 2600);
-
-        return { lat: 29.76295, lng: -95.36225, zoom: 17, isFallback: true };
+    function getUserLocation(callback) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            userLatLng = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude
+            };
+            showNavHint();
+            callback(pos.coords.latitude, pos.coords.longitude);
+          },
+          () => {
+            userLatLng = { lat: 29.76295, lng: -95.36225 };
+            callback(29.76295, -95.36225);
+          }
+        );
+        return;
       }
 
-      return { lat: userLat, lng: userLng, zoom: 15, isFallback: false };
+      userLatLng = { lat: 29.76295, lng: -95.36225 };
+      callback(29.76295, -95.36225);
+    }
+
+    function updateUserLocation(lat, lng) {
+      if (!map || !userMarker || !userPulse) {
+        return;
+      }
+
+      const newPos = { lat, lng };
+      map.setCenter(newPos);
+      userMarker.setPosition(newPos);
+      userPulse.setCenter(newPos);
+      userMarker.setAnimation(google.maps.Animation.BOUNCE);
+      setTimeout(() => userMarker.setAnimation(null), 1200);
     }
 
     // -------------------------------
@@ -364,11 +494,11 @@ document.querySelectorAll(".range-option").forEach(option => {
     // -------------------------------
     function initMap(userLat,userLng,radius){
       if(userLat===undefined||userLng===undefined||radius===undefined){return;}
-      const center=centerChoice(userLat,userLng);
       map=new google.maps.Map(document.getElementById("map"),{
-        center:{lat:center.lat,lng:center.lng},zoom:center.zoom,mapTypeControl:true,
+        center:{lat:userLat,lng:userLng},zoom:15,mapTypeControl:true,mapTypeId:"satellite",tilt:0,
         streetViewControl:false,fullscreenControl:false
       });
+      window.map = map;
 
       userMarker=new google.maps.Marker({
         position:{lat:userLat,lng:userLng},map,title:"You are here",
@@ -389,6 +519,9 @@ document.querySelectorAll(".range-option").forEach(option => {
         if(navigator.geolocation){
           navigator.geolocation.getCurrentPosition(pos=>{
             const newPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
+            currentUserLat = newPos.lat;
+            currentUserLng = newPos.lng;
+            userLatLng = newPos;
             map.setCenter(newPos);
             userMarker.setPosition(newPos);
             pulse.setCenter(newPos);
@@ -398,126 +531,38 @@ document.querySelectorAll(".range-option").forEach(option => {
         }else alert("Geolocation not supported by your browser.");
       });
 
-      // --- Spots (Premium Marker + Card Logic) ---
-      let openCount = 0;
-
-      // Reset selected state
-      function clearSelected() {
-        if (selectedMarker) {
-          // shrink back
-          selectedMarker.setIcon({
-            url: selectedMarker.spot.status === "open" ? AVAILABLE_ICON : OCCUPIED_ICON,
-            scaledSize: new google.maps.Size(20, 20)
-          });
-          selectedMarker = null;
-        }
-        if (selectedPulse) {
-          selectedPulse.setMap(null);
-          selectedPulse = null;
-        }
-        document.getElementById("spotInfo").classList.remove("show");
-      }
-
-      // Show sliding card
-      function showSpotCard(spot) {
-        const card = document.getElementById("spotInfo");
-        const title = document.getElementById("spotTitle");
-        const details = document.getElementById("spotDetails");
-        const navBtn = document.getElementById("navigateBtn");
-
-        // Reset card classes
-        navBtn.classList.remove("busy-btn");
-        navBtn.disabled = false;
-
-        if (spot.status === "open") {
-          title.innerText = `Spot ${spot.id} is OPEN`;
-          title.style.color = "#2f5f55";
-
-          details.innerHTML = `${spot.distanceText}<br>FREE PARKING – 9AM to 6PM`;
-
-          // Restore the normal green Navigate button
-          navBtn.innerText = "NAVIGATE";
-          navBtn.className = "navigate-btn";
-          navBtn.onclick = () => openDirections(spot.lat, spot.lng);
-
-        } else {
-          // --- OCCUPIED LOGIC ---
-          title.innerText = `Spot ${spot.id} is OCCUPIED`;
-          title.style.color = "#d83b3b";
-
-          details.innerHTML = `${spot.distanceText}<br>Occupied for ${spot.duration}`;
-
-          // Replace NAVIGATE with red disabled button
-          navBtn.innerText = "OCCUPIED";
-          navBtn.className = "busy-btn";
-          navBtn.disabled = true;
-          navBtn.onclick = null;
-        }
-
-        card.style.display = "block";
-        card.classList.add("show");
-      }
-
-      // Main loop to draw markers
-      sensors.forEach(s => {
-        const distFromUser = distanceMiles(userLat, userLng, s.lat, s.lng);
-        const distFromCenter = distanceMiles(center.lat, center.lng, s.lat, s.lng);
-
-        // Only markers inside radius
-        if (distFromCenter <= radius) {
-          s.distanceText = `${niceMiles(distFromUser)} mi away`;
-
-          const marker = new google.maps.Marker({
-            position: { lat: s.lat, lng: s.lng },
-            map,
-            icon: {
-              url: s.status === "open" ? AVAILABLE_ICON : OCCUPIED_ICON,
-              scaledSize: new google.maps.Size(20, 20)
-            }
-          });
-
-          marker.spot = s; // attach spot data to marker
-
-          if (s.status === "open") openCount++;
-
-          marker.addListener("click", () => {
-            hideNearbyTip();
-            // Remove previous selection
-            clearSelected();
-
-            // Enlarge selected marker
-            marker.setIcon({
-              url: s.status === "open" ? AVAILABLE_ICON : OCCUPIED_ICON,
-              scaledSize: new google.maps.Size(38, 38)
-            });
-            selectedMarker = marker;
-
-            // Show sliding card
-            showSpotCard(s);
-          });
-        }
-      });
-
       map.addListener("click", () => {
         clearSelected();
         document.getElementById("spotInfo").classList.remove("show");
 
-        if (window.hideNearbyTip) {
-          window.hideNearbyTip();
-        }
+        if (window.hideNearbyTip) window.hideNearbyTip();
       });
-
-      const infoText=document.getElementById("infoTextUser");
-      infoText.textContent=center.isFallback
-        ?`Displaying ${openCount} Open Street Spots`
-        :openCount>0
-          ?`Displaying ${openCount} Open Street Spots within ${radius} miles of your location`
-          :`Displaying 0 Open Street Spots`;
     }
 
     // --- MAIN ---
     const params=new URLSearchParams(location.search);
     const radius=parseFloat(params.get("radius"))||3;
+    currentRadiusMiles = radius;
+
+
+    function bootNearbyMap() {
+      if (!window.google || !window.google.maps) {
+        setTimeout(bootNearbyMap, 100);
+        return;
+      }
+
+      if (!currentRadiusMiles) currentRadiusMiles = 3;
+
+      initMap(29.76295, -95.36225, currentRadiusMiles);
+
+      getUserLocation((lat, lng) => {
+        currentUserLat = lat;
+        currentUserLng = lng;
+        updateUserLocation(lat, lng);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", bootNearbyMap);
   </script>
 </body>
 </html>

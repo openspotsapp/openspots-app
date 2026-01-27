@@ -1,8 +1,10 @@
-import { db } from "./firebase-init.js";
+import { auth, db } from "./firebase-init.js";
 
 import {
   collection,
+  doc,
   getDocs,
+  getDoc,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
@@ -86,8 +88,25 @@ citySelect.addEventListener("change", async () => {
     validateReserveButton();
   });
 
-  reserveAirBtn.addEventListener("click", () => {
+  reserveAirBtn.addEventListener("click", async () => {
     if (!startPicker?.selectedDates[0] || !endPicker?.selectedDates[0]) return;
+
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        const data = snap.exists() ? snap.data() : {};
+
+        if (data.hasPaymentMethod !== true) {
+          window.location.href = "add-payment.html";
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to check payment status:", err);
+        window.location.href = "add-payment.html";
+        return;
+      }
+    }
 
     const airportId = selectedAirportId;
     window.location.href = `airport-details.html?airportId=${airportId}`;

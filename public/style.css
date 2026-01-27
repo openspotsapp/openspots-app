@@ -1683,23 +1683,6 @@ footer {
   transform: scale(1.1);
 }
 
-.radius-popup {
-  position: absolute;
-  bottom: 160px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  padding: 16px 18px;
-  border-radius: 14px;
-  box-shadow: 0px 4px 16px rgba(0,0,0,0.15);
-  width: 80%;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 20;
-}
-
 .radius-title {
   font-size: 15px;
   font-weight: 700;
@@ -2251,7 +2234,7 @@ footer {
   white-space: nowrap;
   z-index: 9999;
   opacity: 0;
-  animation: fade-in 0.4s forwards;
+  animation: fade-in 0.2s forwards;
 }
 
 /* Tooltip arrow */
@@ -2266,10 +2249,104 @@ footer {
   border-color: #2f6f62 transparent transparent transparent;
 }
 
+.nav-hint {
+  position: absolute;
+  bottom: 120px; /* positions above navbar button */
+  left: 48%;
+  transform: translateX(-50%);
+  background: #2f6f62;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 9999;
+  opacity: 0;
+  animation: fade-in 0.3s forwards;
+}
+
+.nav-hint::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px;
+  border-style: solid;
+  border-color: #2f6f62 transparent transparent transparent;
+}
+
 /* Fade animation */
 @keyframes fade-in {
   from { opacity: 0; transform: translateX(-50%) translateY(6px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ================================
+   ℹ️ INFO MICRO POPUP (ISOLATED)
+   ================================ */
+
+.info-micro {
+  position: absolute;
+  bottom: 90px; /* sits above navbar */
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90%;
+  padding: 10px 16px;
+  background: #ffffff; /* OpenSpots green */
+  color: rgba(47, 111, 98, 0.95);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.35;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* icon pulse */
+.info-icon {
+  animation: info-pulse 2.2s infinite;
+}
+
+/* show state */
+.info-micro.show {
+  animation: info-fade-in 0.35s ease forwards;
+}
+
+/* hide state */
+.info-micro.hide {
+  animation: info-fade-out 0.25s ease forwards;
+}
+
+/* animations */
+@keyframes info-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes info-fade-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px);
+  }
+}
+
+@keyframes info-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
 }
 
 .gps-button {
@@ -2325,6 +2402,35 @@ footer {
 .range-option:hover {
     background: #d0ecd6;
 }
+
+.radius-popup {
+    position: fixed;
+    bottom: 120px; /* keeps it above nav bar */
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 18px;
+    width: 85%;
+    border-radius: 16px;
+    box-shadow: rgba(0,0,0,0.25) 0 8px 24px;
+    z-index: 99999;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.radius-option {
+    background: #e8f5e9;
+    padding: 12px;
+    border-radius: 12px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.radius-option:hover {
+    background: #d0ecd6;
+}
+
 
 /* ===============================
    FREE PAGE MAP ONLY
@@ -2676,6 +2782,11 @@ footer {
   padding-bottom: 100px; 
   padding-left: 15px;
   padding-right: 15px;
+}
+
+.widget.airport-widget small {
+  display: block;
+  text-align: center;
 }
 
 /* Desktop centering */
@@ -3368,4 +3479,3 @@ footer {
   opacity: 0.3;
   cursor: not-allowed;
 }
-

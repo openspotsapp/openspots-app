@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirm Parking | OpenSpots</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./confirm-spot.css" />
+</head>
+<body>
+  <div class="confirm-container">
+    <h1>Confirm Your Parking</h1>
+    <p id="spotLabel" class="spot-label"></p>
+    <p id="venueLabel" class="venue-label">Venue details coming soon</p>
+
+    <button id="confirmBtn" class="confirm-btn">Confirm Parking</button>
+
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <span>Starting your session…</span>
+    </div>
+  </div>
+
+  <script type="module" src="./firebase-init.js"></script>
+  <script type="module" src="./confirm-spot.js"></script>
+</body>
+</html>
