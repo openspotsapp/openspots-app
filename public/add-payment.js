@@ -34,8 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
       userEmailEl.textContent = fullName || data.display_name || user.email || "Unknown user";
 
       if (data.hasPaymentMethod === true) {
-        const pendingSpot = sessionStorage.getItem("spotId");
-        window.location.href = pendingSpot ? "confirm-spot.html" : "nearby.html";
+        addPaymentBtn.disabled = true;
+        addPaymentBtn.textContent = "Card already added";
+        setStatus("");
         return;
       }
     } catch (err) {
@@ -63,7 +64,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setStatus("Starting secure setup...");
 
     try {
-      const response = await fetch("/create-setup-session", {
+      const API_BASE =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+          ? "http://localhost:5500"
+          : "";
+
+      const response = await fetch(`${API_BASE}/create-setup-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

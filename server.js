@@ -76,26 +76,53 @@ app.post(
           // Retrieve SetupIntent
           const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
 
-          const paymentMethod = setupIntent.payment_method;
+          const paymentMethodId = setupIntent.payment_method;
 
-          // Get Firebase user via Stripe metadata
+          // Get Firebase user via Stripe metadata (or fallback by stripeCustomerId)
           const customer = await stripe.customers.retrieve(customerId);
-          const uid = customer.metadata.uid;
+          let userId = customer.metadata.uid;
 
-          if (!uid || !paymentMethod) {
-            console.error("Missing uid or payment method");
-            return;
+          if (!userId) {
+            const byCamel = await db.collection("users")
+              .where("stripeCustomerId", "==", customerId)
+              .limit(1)
+              .get();
+            if (!byCamel.empty) {
+              userId = byCamel.docs[0].id;
+            }
           }
 
-          // Mark user as payment-ready
-          await db.collection("users").doc(uid).update({
-            hasPaymentMethod: true,
-            defaultPaymentMethod: paymentMethod,
-            payment_updated_at: admin.firestore.FieldValue.serverTimestamp()
-          });
+          if (!userId) {
+            const bySnake = await db.collection("users")
+              .where("stripe_customer_id", "==", customerId)
+              .limit(1)
+              .get();
+            if (!bySnake.empty) {
+              userId = bySnake.docs[0].id;
+            }
+          }
 
-          console.log("✅ Payment method saved for user:", uid);
-          return;
+          if (!userId || !paymentMethodId) {
+            console.error("Missing uid or payment method");
+            break;
+          }
+
+          const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
+          const card = pm.card || {};
+
+          await db.collection("users").doc(userId).set({
+            stripe_customer_id: customerId,
+            stripe_default_payment_method: paymentMethodId,
+            hasPaymentMethod: true,
+            payment_brand: card.brand || null,
+            payment_last4: card.last4 || null,
+            payment_exp_month: card.exp_month || null,
+            payment_exp_year: card.exp_year || null,
+            payment_updated_at: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+
+          console.log("✅ Payment method saved for user:", userId);
+          break;
         }
 
         const { userId, eventId, spotId } = session.metadata;

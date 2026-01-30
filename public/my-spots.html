@@ -20,11 +20,28 @@
   <div data-page-title="MY SPOTS"></div>
 
   <main class="my-spots-container">
-    <h2 class="page-title">RESERVATIONS</h2>
-    <p id="authError" class="auth-error hidden">
-      You must be logged in to view your reservations.
-    </p>
-    <div id="spotsList" class="spots-list"></div>
+    <div class="tabs">
+      <button class="tab active" data-tab="active">Active Parking</button>
+      <button class="tab" data-tab="reservations">Reservations</button>
+      <button class="tab" data-tab="past">Past Parking</button>
+    </div>
+
+    <div class="tab-content">
+      <section id="tab-active" class="tab-panel active" data-component="spot-card-parking">
+        <p>No active parking session</p>
+      </section>
+
+      <section id="tab-reservations" class="tab-panel" data-component="spot-card-active">
+        <p id="authError" class="auth-error hidden">
+          You must be logged in to view your reservations.
+        </p>
+        <div id="spotsList" class="spots-list">No upcoming reservations</div>
+      </section>
+
+      <section id="tab-past" class="tab-panel">
+        <p>No past parking sessions</p>
+      </section>
+    </div>
   </main>
 
   <script src="firebase-init.js" type="module"></script>

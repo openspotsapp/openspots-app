@@ -41,11 +41,12 @@
           <div>
             <div class="card-label">Card on file</div>
             <div class="card-desc">Securely stored for faster checkout</div>
+            <div class="card-last4" id="cardLast4" style="display:none;"></div>
           </div>
         </div>
 
         <div class="payment-method-right">
-          <span class="card-status">Not added</span>
+          <span class="card-status" id="cardStatus">Not added</span>
         </div>
       </div>
 
@@ -64,7 +65,7 @@
   <script src="load-components.js"></script>
 
   <!-- Optional logic -->
-  <script src="payment-options.js"></script>
+  <script type="module" src="payment-options.js"></script>
 
 </body>
 </html>

@@ -12,6 +12,14 @@
   margin-top: 18px;
 }
 
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
 .spot-card {
   position: relative;
   display: flex;
@@ -38,6 +46,24 @@
   border: 2px solid #e74c3c;
   opacity: 0.6;
   cursor: default;
+}
+
+.spot-card-parking-past,
+.spot-card-reservation-past {
+  border: 2px solid #e74c3c;
+  background: #fdecea;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.spot-card-parking-past::after,
+.spot-card-reservation-past::after {
+  background: #e74c3c;
+}
+
+.spot-card-parking-past .status-text,
+.spot-card-reservation-past .status-text {
+  background: rgba(231, 76, 60, 0.15);
+  color: #b03a2e;
 }
 
 .spot-id {

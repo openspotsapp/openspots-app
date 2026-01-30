@@ -25,13 +25,9 @@
   </main>
 
   <script>
-    const pendingSpot = sessionStorage.getItem("spotId");
-
-    if (pendingSpot) {
-      window.location.href = "./confirm-spot.html";
-    } else {
-      window.location.href = "./nearby.html";
-    }
+    setTimeout(() => {
+      window.location.href = "/my-spots.html?tab=active";
+    }, 2000);
   </script>
 </body>
 </html>
