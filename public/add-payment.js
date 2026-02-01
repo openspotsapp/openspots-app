@@ -11,7 +11,7 @@ function setStatus(message, isError = false) {
   statusEl.style.color = isError ? "#8a2b2b" : "#1f3a33";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const addPaymentBtn = document.getElementById("addPaymentBtn");
   const userEmailEl = document.getElementById("userEmail");
   const stripe = window.Stripe ? Stripe(stripePublicKey) : null;
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      window.location.href = "login.html";
+      setStatus("Please sign in to continue.", true);
       return;
     }
 
@@ -31,27 +31,29 @@ document.addEventListener("DOMContentLoaded", () => {
       const firstName = data.first_name || data.firstName || "";
       const lastName = data.last_name || data.lastName || "";
       const fullName = `${firstName} ${lastName}`.trim();
-      userEmailEl.textContent = fullName || data.display_name || user.email || "Unknown user";
+      userEmailEl.textContent =
+        fullName || data.display_name || user.email || "Unknown user";
 
       if (data.hasPaymentMethod === true) {
-        addPaymentBtn.disabled = true;
-        addPaymentBtn.textContent = "Card already added";
-        setStatus("");
+        window.location.href = "./confirm-spot.html?spot=ROM-01";
         return;
       }
+
+      addPaymentBtn.disabled = false;
+      setStatus("");
     } catch (err) {
-      console.error("Failed to load user name:", err);
+      console.error("Failed to load user:", err);
       userEmailEl.textContent = user.email || "Unknown user";
+      addPaymentBtn.disabled = false;
+      setStatus("");
     }
-    addPaymentBtn.disabled = false;
-    setStatus("");
   });
 
   addPaymentBtn.addEventListener("click", async () => {
     const user = auth.currentUser;
 
     if (!user) {
-      window.location.href = "login.html";
+      setStatus("Please refresh to continue.", true);
       return;
     }
 

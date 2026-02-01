@@ -43,30 +43,31 @@ async function resolveZone() {
 // OPTIONAL: add venue later
 // sessionStorage.setItem("venueId", "river-oaks");
 
-async function routeNext(user) {
-  if (!user) {
-    window.location.href = "./signup.html";
-    return;
-  }
-
-  try {
-    const snap = await getDoc(doc(db, "users", user.uid));
-    const data = snap.exists() ? snap.data() : {};
-
-    if (data.hasPaymentMethod === true) {
-      window.location.href = "./confirm-spot.html";
-      return;
-    }
-  } catch (err) {
-    console.error("Failed to check payment status:", err);
-  }
-
-  window.location.href = "./add-payment.html";
+function withSpotParam(path) {
+  return `${path}?spot=${encodeURIComponent(zoneNumber)}`;
 }
 
 setTimeout(() => {
   onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = withSpotParam("./signup.html");
+      return;
+    }
+
     await resolveZone();
-    routeNext(user);
+
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      const data = snap.exists() ? snap.data() : {};
+
+      if (data.hasPaymentMethod === true) {
+        window.location.href = withSpotParam("./confirm-spot.html");
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to check user status:", err);
+    }
+
+    window.location.href = withSpotParam("./add-payment.html");
   });
 }, 1200);

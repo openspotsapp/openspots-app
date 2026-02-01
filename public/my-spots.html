@@ -54,8 +54,10 @@
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        // Not logged in → force login
-        window.location.replace("/login.html");
+        const authError = document.getElementById("authError");
+        if (authError) {
+          authError.classList.remove("hidden");
+        }
       }
     });
   </script>

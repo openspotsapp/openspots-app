@@ -1,5 +1,4 @@
 import { auth, db } from "./firebase-init.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import {
   addDoc,
   collection,
@@ -25,7 +24,6 @@ if (spotLabelEl) {
 
 async function enforcePaymentMethod(user) {
   if (!user) {
-    window.location.href = "./signup.html";
     return false;
   }
 
@@ -44,6 +42,16 @@ async function enforcePaymentMethod(user) {
   return false;
 }
 
+async function startParkingSession(user, spotId) {
+  return await addDoc(collection(db, "parking_sessions"), {
+    user_id: user.uid,
+    spot_id: spotId,
+    status: "ACTIVE",
+    started_at: serverTimestamp(),
+    source: "qr"
+  });
+}
+
 function showLoading(isLoading) {
   if (!confirmBtn || !loadingEl) return;
   confirmBtn.disabled = isLoading;
@@ -54,32 +62,32 @@ if (!confirmBtn) {
   throw new Error("Confirm button not found");
 }
 
-onAuthStateChanged(auth, async (user) => {
-  const canProceed = await enforcePaymentMethod(user);
-  if (!canProceed) return;
+const currentUser = auth.currentUser;
 
-  confirmBtn.addEventListener("click", async () => {
-    showLoading(true);
+if (!currentUser) {
+  if (loadingEl) {
+    loadingEl.classList.remove("hidden");
+    loadingEl.textContent = "Sign-in required.";
+  }
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+  }
+} else {
+  enforcePaymentMethod(currentUser).then((canProceed) => {
+    if (!canProceed) return;
 
-    try {
-      const venueId = sessionStorage.getItem("venueId") || "unknown";
+    confirmBtn.addEventListener("click", async () => {
+      showLoading(true);
 
-      await addDoc(collection(db, "parking_sessions"), {
-        userId: user.uid,
-        spotId: spotId,
-        venueId: venueId,
-        status: "active",
-        startedAt: serverTimestamp(),
-        source: "qr"
-      });
-
-      sessionStorage.removeItem("pending_spot_id");
-
-      window.location.href = "./active-session.html";
-    } catch (err) {
-      console.error("Failed to start session:", err);
-      showLoading(false);
-      alert("Unable to start your parking session. Please try again.");
-    }
+      try {
+        const docRef = await startParkingSession(currentUser, spotId);
+        console.log("Parking session created:", docRef.id);
+        window.location.href = "./my-spots.html?tab=active";
+      } catch (err) {
+        console.error("Parking session failed:", err);
+        showLoading(false);
+        alert("Could not start parking session.");
+      }
+    });
   });
-});
+}

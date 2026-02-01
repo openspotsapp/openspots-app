@@ -416,3 +416,10 @@
   letter-spacing: 1px;
   color: #2f4f43;
 }
+
+/* 🔴 Past cards: make spot/sensor badge RED */
+.spot-card-parking-past::after,
+.spot-card-reservation-past::after {
+  background: #e74c3c;        /* red */
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.12);
+}
