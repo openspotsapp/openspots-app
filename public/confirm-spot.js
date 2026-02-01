@@ -7,6 +7,7 @@ import {
   getDoc,
   getDocs,
   query,
+  where,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
@@ -33,9 +34,26 @@ if (spotLabelEl && spotId) {
 }
 
 async function loadSpotMeta() {
-  if (!pendingParkingDocId) return;
-
   try {
+    // 🔁 Fallback: resolve venue via spotId
+    if (!pendingParkingDocId && spotId) {
+      const q = query(
+        collection(db, "private_metered_parking"),
+        where("zone_number", "==", spotId)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const data = snap.docs[0].data();
+        if (venueLabelEl) {
+          venueLabelEl.innerText =
+            data.location_name || data.venue_name || "Parking Location";
+        }
+      }
+      return;
+    }
+
+    if (!pendingParkingDocId) return;
+
     const snap = await getDoc(
       doc(db, "private_metered_parking", pendingParkingDocId)
     );
@@ -50,10 +68,7 @@ async function loadSpotMeta() {
 
     if (venueLabelEl) {
       venueLabelEl.innerText =
-        data.location_name ||
-        data.venue_name ||
-        data.venue ||
-        venueLabelEl.innerText;
+        data.location_name || data.venue_name || venueLabelEl.innerText;
     }
 
     if (spotLabelEl && spotId) {
