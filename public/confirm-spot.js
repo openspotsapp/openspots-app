@@ -1,9 +1,12 @@
 import { auth, db } from "./firebase-init.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import {
   addDoc,
   collection,
   doc,
   getDoc,
+  getDocs,
+  query,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
@@ -81,16 +84,6 @@ async function enforcePaymentMethod(user) {
   return false;
 }
 
-async function startParkingSession(user, spotId) {
-  return await addDoc(collection(db, "parking_sessions"), {
-    user_id: user.uid,
-    spot_id: spotId,
-    status: "ACTIVE",
-    started_at: serverTimestamp(),
-    source: "qr"
-  });
-}
-
 function showLoading(isLoading) {
   if (!confirmBtn || !loadingEl) return;
   confirmBtn.disabled = isLoading;
@@ -101,9 +94,7 @@ if (!confirmBtn) {
   throw new Error("Confirm button not found");
 }
 
-const currentUser = auth.currentUser;
-
-(async () => {
+onAuthStateChanged(auth, async (user) => {
   await loadSpotMeta();
 
   if (!spotId) {
@@ -117,7 +108,7 @@ const currentUser = auth.currentUser;
     return;
   }
 
-  if (!currentUser) {
+  if (!user) {
     if (loadingEl) {
       loadingEl.classList.remove("hidden");
       loadingEl.textContent = "Sign-in required.";
@@ -128,14 +119,44 @@ const currentUser = auth.currentUser;
     return;
   }
 
-  const canProceed = await enforcePaymentMethod(currentUser);
+  const canProceed = await enforcePaymentMethod(user);
   if (!canProceed) return;
 
   confirmBtn.addEventListener("click", async () => {
     showLoading(true);
 
     try {
-      const docRef = await startParkingSession(currentUser, spotId);
+      const q = query(
+        collection(db, "private_metered_parking"),
+        where("zone_number", "==", spotId)
+      );
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        showLoading(false);
+        alert("Parking zone not found. Please rescan the QR code.");
+        return;
+      }
+
+      const zoneDoc = snap.docs[0];
+      const zone = zoneDoc.data();
+      const ratePerHour = Number(zone.rate_per_hour) || 0;
+
+      const docRef = await addDoc(collection(db, "parking_sessions"), {
+        user_id: doc(db, "users", user.uid),
+        sensor_id: spotId,
+        arrival_time: serverTimestamp(),
+        created_at: serverTimestamp(),
+        status: "ACTIVE",
+        regulation_type: zone.regulation_type || "METERED",
+        rate_per_minute: ratePerHour / 60,
+        price_charged: 0,
+        total_minutes: 0,
+        payment_method: "MOBILE",
+        after_hours_fee: 0,
+        zone_id: doc(db, "private_metered_parking", zoneDoc.id)
+      });
+
       console.log("Parking session created:", docRef.id);
       window.location.href = "./my-spots.html?tab=active";
     } catch (err) {
@@ -144,4 +165,4 @@ const currentUser = auth.currentUser;
       alert("Could not start parking session.");
     }
   });
-})();
+});
