@@ -299,7 +299,8 @@
 
           if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
-          riverOaksSpots.push({ ...d, id: doc.id, lat, lng });
+          const isAvailable = d.is_available !== false && d.is_available !== "false";
+          riverOaksSpots.push({ ...d, id: doc.id, lat, lng, available: isAvailable });
         });
       }
 
@@ -343,7 +344,7 @@
             lng
           );
 
-          const isAvailable = d.is_available !== false;
+          const isAvailable = d.is_available !== false && d.is_available !== "false";
 
           if (distance <= radiusMiles) {
             results.push({
