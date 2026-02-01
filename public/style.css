@@ -1929,7 +1929,7 @@ footer {
   border-radius: 14px;
   border: none;
   cursor: pointer;
-  margin-top: 18px;
+  margin-top: 3px;
   margin-bottom: 10px;
   transition: 0.2s ease-in-out;
 }
@@ -1983,7 +1983,7 @@ footer {
     font-weight: 600;
     letter-spacing: 1px;
     margin-top: 1px;
-    margin-bottom: 10px;
+    margin-bottom: 1px;
     display: flex;
     flex-direction: column;
     gap: 1px; /* spacing between lines */
@@ -2044,6 +2044,7 @@ footer {
     letter-spacing: 1px;
     margin-bottom: 12px;
     color: #eafdf7;
+    margin-top: 1px;
 }
 
 .accset-subtitle {
