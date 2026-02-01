@@ -8,6 +8,7 @@ import {
   getDocs,
   query,
   where,
+  updateDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
@@ -171,6 +172,15 @@ onAuthStateChanged(auth, async (user) => {
         after_hours_fee: 0,
         zone_id: doc(db, "private_metered_parking", zoneDoc.id)
       });
+
+      // 🔴 Mark spot as occupied
+      await updateDoc(
+        doc(db, "private_metered_parking", zoneDoc.id),
+        {
+          is_available: false,
+          last_updated: serverTimestamp()
+        }
+      );
 
       console.log("Parking session created:", docRef.id);
       window.location.href = "./my-spots.html?tab=active";

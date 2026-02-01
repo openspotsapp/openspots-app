@@ -1998,7 +1998,7 @@ footer {
 .signup-container {
     width: 85%;
     max-width: 360px;
-    max-height: 90vh;     /* prevents content from overflowing the phone screen */
+    max-height: 110vh;     /* prevents content from overflowing the phone screen */
 
     background: linear-gradient(
       300deg,

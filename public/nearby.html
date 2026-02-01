@@ -343,10 +343,7 @@
             lng
           );
 
-          const isAvailable =
-            d.status === undefined ||
-            d.status === "available" ||
-            d.available === true;
+          const isAvailable = d.is_available !== false;
 
           if (distance <= radiusMiles && isAvailable) {
             results.push({ ...d, id: doc.id, lat, lng });
