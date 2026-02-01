@@ -26,7 +26,12 @@
 
   <script>
     setTimeout(() => {
-      window.location.href = "/confirm-spot.html";
+      const params = new URLSearchParams(window.location.search);
+      const spot = params.get("spot");
+      const target = spot
+        ? `/confirm-spot.html?spot=${encodeURIComponent(spot)}`
+        : "/confirm-spot.html";
+      window.location.href = target;
     }, 2000);
   </script>
 </body>

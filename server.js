@@ -335,7 +335,7 @@ app.post("/create-checkout-session", async (req, res) => {
 // Create Stripe Setup session
 app.post("/create-setup-session", async (req, res) => {
     try {
-        const { uid, email } = req.body;
+        const { uid, email, spot } = req.body;
 
         if (!uid || !email) {
             return res.status(400).json({ error: "Missing uid or email" });
@@ -363,12 +363,19 @@ app.post("/create-setup-session", async (req, res) => {
         }
 
         // 2. Create Stripe Checkout session in SETUP mode
+        const successUrl = spot
+            ? `${process.env.BASE_URL}/payment-success.html?spot=${encodeURIComponent(spot)}`
+            : `${process.env.BASE_URL}/payment-success.html`;
+        const cancelUrl = spot
+            ? `${process.env.BASE_URL}/add-payment.html?spot=${encodeURIComponent(spot)}`
+            : `${process.env.BASE_URL}/add-payment.html`;
+
         const session = await stripe.checkout.sessions.create({
             mode: "setup",
             customer: customer.id,
             payment_method_types: ["card"],
-            success_url: `${process.env.BASE_URL}/payment-success.html`,
-            cancel_url: `${process.env.BASE_URL}/add-payment.html`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
         });
 
         res.json({ sessionId: session.id });

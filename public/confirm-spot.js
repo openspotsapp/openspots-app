@@ -7,18 +7,20 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-const spotId = sessionStorage.getItem("pending_spot_id");
+const params = new URLSearchParams(window.location.search);
+const spotFromUrl = params.get("spot");
 
-if (!spotId) {
-  window.location.href = "./nearby.html";
-  throw new Error("Missing pending spot ID");
+if (spotFromUrl) {
+  sessionStorage.setItem("pending_spot_id", spotFromUrl);
 }
+
+const spotId = spotFromUrl || sessionStorage.getItem("pending_spot_id");
 
 const spotLabelEl = document.getElementById("spotLabel");
 const confirmBtn = document.getElementById("confirmBtn");
 const loadingEl = document.getElementById("loading");
 
-if (spotLabelEl) {
+if (spotLabelEl && spotId) {
   spotLabelEl.innerText = `You are parking in Spot ${spotId}`;
 }
 
@@ -64,7 +66,15 @@ if (!confirmBtn) {
 
 const currentUser = auth.currentUser;
 
-if (!currentUser) {
+if (!spotId) {
+  if (loadingEl) {
+    loadingEl.classList.remove("hidden");
+    loadingEl.textContent = "Missing spot ID. Please rescan the QR code.";
+  }
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+  }
+} else if (!currentUser) {
   if (loadingEl) {
     loadingEl.classList.remove("hidden");
     loadingEl.textContent = "Sign-in required.";

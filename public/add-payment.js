@@ -51,6 +51,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   addPaymentBtn.addEventListener("click", async () => {
     const user = auth.currentUser;
+    const params = new URLSearchParams(window.location.search);
+    const spot = params.get("spot") || sessionStorage.getItem("pending_spot_id");
 
     if (!user) {
       setStatus("Please refresh to continue.", true);
@@ -77,7 +79,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid: user.uid,
-          email: user.email
+          email: user.email,
+          spot
         })
       });
 
