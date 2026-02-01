@@ -116,6 +116,7 @@ function resolveParkingTotal(session, startedAt, endedAt) {
     session.total_amount ??
     session.amount_total ??
     session.total_cost ??
+    session.price_charged ??
     session.price_paid ??
     session.price ??
     null;
@@ -152,6 +153,20 @@ function resolveParkingTotal(session, startedAt, endedAt) {
   }
 
   return "Total TBD";
+}
+
+function resolveParkingMinutes(session, startedAt, endedAt) {
+  if (Number.isFinite(session.total_minutes)) {
+    return `${session.total_minutes} min`;
+  }
+
+  if (!startedAt || !endedAt) return "Minutes TBD";
+
+  const durationMinutes = Math.max(
+    0,
+    Math.floor((endedAt.getTime() - startedAt.getTime()) / 60000)
+  );
+  return `${durationMinutes} min`;
 }
 
 function resolveReservationTotal(reservation) {
@@ -337,6 +352,7 @@ function renderPastParkingSessionCard(session) {
     <strong>${session.location_name || "Metered Parking"}</strong>
     <div>Rate: ${formatRatePerMinute(session)}</div>
     <div>Started: ${formatDateTime(session.started_at)}</div>
+    <div>Minutes: ${session.minutes_display || "Minutes TBD"}</div>
     <div>Total: ${session.total_display || "Total TBD"}</div>
   `;
   left.appendChild(metaEl);
@@ -543,6 +559,7 @@ async function loadPastItems(user) {
         location_name: locationName,
         spot_label: spotLabel,
         started_at: startedAt,
+        minutes_display: resolveParkingMinutes(data, startedAt, endedAt),
         total_display: resolveParkingTotal(data, startedAt, endedAt),
       })
     );
