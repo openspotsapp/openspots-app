@@ -173,14 +173,15 @@ onAuthStateChanged(auth, async (user) => {
         zone_id: doc(db, "private_metered_parking", zoneDoc.id)
       });
 
-      // 🔴 Mark spot as occupied
-      await updateDoc(
-        doc(db, "private_metered_parking", zoneDoc.id),
-        {
-          is_available: false,
-          last_updated: serverTimestamp()
-        }
-      );
+      await fetch("/api/lock-metered-spot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          zoneDocId: zoneDoc.id
+        })
+      });
 
       console.log("Parking session created:", docRef.id);
       window.location.href = "./my-spots.html?tab=active";

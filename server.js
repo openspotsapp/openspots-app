@@ -291,6 +291,32 @@ app.get("/events/spot-updates", (req, res) => {
     });
 });
 
+// Admin: lock a metered spot
+app.post("/api/lock-metered-spot", async (req, res) => {
+    try {
+        const { zoneDocId } = req.body;
+
+        if (!zoneDocId) {
+            return res.status(400).json({ error: "Missing zoneDocId" });
+        }
+
+        const zoneRef = admin
+            .firestore()
+            .collection("private_metered_parking")
+            .doc(zoneDocId);
+
+        await zoneRef.update({
+            is_available: false,
+            last_updated: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return res.json({ success: true });
+    } catch (err) {
+        console.error("Failed to lock metered spot:", err);
+        return res.status(500).json({ error: "Failed to lock spot" });
+    }
+});
+
 // Create Stripe Checkout session
 app.post("/create-checkout-session", async (req, res) => {
     try {
