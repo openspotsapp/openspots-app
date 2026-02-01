@@ -36,6 +36,37 @@ app.use(cors({
 }));
 const PORT = process.env.PORT || 5500;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const ACTIVE_SESSION_INTERVAL = 60 * 1000; // 1 min
+
+setInterval(async () => {
+  try {
+    const now = admin.firestore.Timestamp.now();
+
+    const activeSessions = await db
+      .collection("parking_sessions")
+      .where("status", "==", "ACTIVE")
+      .get();
+
+    for (const docSnap of activeSessions.docs) {
+      const data = docSnap.data();
+      if (!data.arrival_time || typeof data.rate_per_minute !== "number") {
+        continue;
+      }
+
+      const start = data.arrival_time.toDate();
+      const minutes = Math.floor((Date.now() - start.getTime()) / 60000);
+      const price = Number((minutes * data.rate_per_minute).toFixed(2));
+
+      await docSnap.ref.update({
+        total_minutes: minutes,
+        price_charged: price,
+        last_updated: now
+      });
+    }
+  } catch (err) {
+    console.error("Failed to update active sessions:", err);
+  }
+}, ACTIVE_SESSION_INTERVAL);
 
 // Serve PUBLIC folder
 app.use(express.static(path.join(__dirname, "public")));
@@ -289,6 +320,51 @@ app.get("/events/spot-updates", (req, res) => {
         console.log("❌ SSE client disconnected");
         amqpEvents.off("spot-update", handler);
     });
+});
+
+app.post("/start-metered-session", async (req, res) => {
+    try {
+        const { zone_id } = req.body;
+
+        if (!zone_id) {
+            return res.status(400).json({ error: "Missing zone_id" });
+        }
+
+        await db.doc(zone_id).update({
+            is_available: false,
+            last_updated: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return res.json({ success: true });
+    } catch (err) {
+        console.error("Failed to start metered session:", err);
+        return res.status(500).json({ error: "Failed to start session" });
+    }
+});
+
+app.post("/end-metered-session", async (req, res) => {
+    try {
+        const { session_id, zone_id } = req.body;
+
+        if (!session_id || !zone_id) {
+            return res.status(400).json({ error: "Missing session_id or zone_id" });
+        }
+
+        await db.collection("parking_sessions").doc(session_id).update({
+            status: "COMPLETED",
+            ended_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        await db.doc(zone_id).update({
+            is_available: true,
+            last_updated: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return res.json({ success: true });
+    } catch (err) {
+        console.error("Failed to end metered session:", err);
+        return res.status(500).json({ error: "Failed to end session" });
+    }
 });
 
 // Admin: lock a metered spot

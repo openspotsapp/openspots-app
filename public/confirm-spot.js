@@ -173,13 +173,13 @@ onAuthStateChanged(auth, async (user) => {
         zone_id: doc(db, "private_metered_parking", zoneDoc.id)
       });
 
-      await fetch("/api/lock-metered-spot", {
+      await fetch("/start-metered-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          zoneDocId: zoneDoc.id
+          zone_id: zoneDoc.ref.path
         })
       });
 
