@@ -249,7 +249,7 @@
         addMarker({
           lat: spot.lat,
           lng: spot.lng,
-          available: true,
+          available: spot.available !== false,
           meta: spot.meta || spot
         });
       });
@@ -345,8 +345,14 @@
 
           const isAvailable = d.is_available !== false;
 
-          if (distance <= radiusMiles && isAvailable) {
-            results.push({ ...d, id: doc.id, lat, lng });
+          if (distance <= radiusMiles) {
+            results.push({
+              ...d,
+              id: doc.id,
+              lat,
+              lng,
+              available: isAvailable
+            });
           }
         });
       }
@@ -395,6 +401,7 @@
       const details = document.getElementById("spotDetails");
       const navBtn = document.getElementById("navigateBtn");
       const meta = spot.meta || {};
+      const isAvailable = spot.available !== false;
 
       title.innerText = meta.location_name || "Parking Spot";
       details.innerHTML = `
@@ -402,10 +409,19 @@
         ${meta.rate_per_hour != null ? `$${meta.rate_per_hour}/hr<br>` : ""}
         ${meta.max_duration_mins ? `${meta.max_duration_mins} min max` : ""}
       `;
-      navBtn.innerText = "NAVIGATE";
-      navBtn.className = "navigate-btn";
-      navBtn.disabled = false;
-      navBtn.onclick = () => openDirections(spot.lat, spot.lng);
+      if (isAvailable) {
+        card.classList.remove("occupied");
+        navBtn.innerText = "NAVIGATE";
+        navBtn.className = "navigate-btn";
+        navBtn.disabled = false;
+        navBtn.onclick = () => openDirections(spot.lat, spot.lng);
+      } else {
+        card.classList.add("occupied");
+        navBtn.innerText = "OCCUPIED";
+        navBtn.className = "navigate-btn occupied";
+        navBtn.disabled = true;
+        navBtn.onclick = null;
+      }
 
       card.style.display = "block";
       card.classList.add("show");
