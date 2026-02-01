@@ -52,7 +52,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   addPaymentBtn.addEventListener("click", async () => {
     const user = auth.currentUser;
     const params = new URLSearchParams(window.location.search);
-    const spot = params.get("spot") || sessionStorage.getItem("pending_spot_id");
+    const spot =
+      params.get("spot") ||
+      sessionStorage.getItem("pending_spot_id") ||
+      sessionStorage.getItem("pending_zone_number");
 
     if (!user) {
       setStatus("Please refresh to continue.", true);

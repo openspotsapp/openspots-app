@@ -14,14 +14,51 @@ if (spotFromUrl) {
   sessionStorage.setItem("pending_spot_id", spotFromUrl);
 }
 
-const spotId = spotFromUrl || sessionStorage.getItem("pending_spot_id");
+let spotId =
+  spotFromUrl ||
+  sessionStorage.getItem("pending_spot_id") ||
+  sessionStorage.getItem("pending_zone_number");
+const pendingParkingDocId = sessionStorage.getItem("pending_parking_doc_id");
 
 const spotLabelEl = document.getElementById("spotLabel");
+const venueLabelEl = document.getElementById("venueLabel");
 const confirmBtn = document.getElementById("confirmBtn");
 const loadingEl = document.getElementById("loading");
 
 if (spotLabelEl && spotId) {
   spotLabelEl.innerText = `You are parking in Spot ${spotId}`;
+}
+
+async function loadSpotMeta() {
+  if (!pendingParkingDocId) return;
+
+  try {
+    const snap = await getDoc(
+      doc(db, "private_metered_parking", pendingParkingDocId)
+    );
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+
+    if (!spotId && data.zone_number) {
+      spotId = data.zone_number;
+      sessionStorage.setItem("pending_spot_id", spotId);
+    }
+
+    if (venueLabelEl) {
+      venueLabelEl.innerText =
+        data.location_name ||
+        data.venue_name ||
+        data.venue ||
+        venueLabelEl.innerText;
+    }
+
+    if (spotLabelEl && spotId) {
+      spotLabelEl.innerText = `You are parking in Spot ${spotId}`;
+    }
+  } catch (err) {
+    console.error("Failed to load spot metadata:", err);
+  }
 }
 
 async function enforcePaymentMethod(user) {
@@ -66,38 +103,45 @@ if (!confirmBtn) {
 
 const currentUser = auth.currentUser;
 
-if (!spotId) {
-  if (loadingEl) {
-    loadingEl.classList.remove("hidden");
-    loadingEl.textContent = "Missing spot ID. Please rescan the QR code.";
-  }
-  if (confirmBtn) {
-    confirmBtn.disabled = true;
-  }
-} else if (!currentUser) {
-  if (loadingEl) {
-    loadingEl.classList.remove("hidden");
-    loadingEl.textContent = "Sign-in required.";
-  }
-  if (confirmBtn) {
-    confirmBtn.disabled = true;
-  }
-} else {
-  enforcePaymentMethod(currentUser).then((canProceed) => {
-    if (!canProceed) return;
+(async () => {
+  await loadSpotMeta();
 
-    confirmBtn.addEventListener("click", async () => {
-      showLoading(true);
+  if (!spotId) {
+    if (loadingEl) {
+      loadingEl.classList.remove("hidden");
+      loadingEl.textContent = "Missing spot ID. Please rescan the QR code.";
+    }
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+    }
+    return;
+  }
 
-      try {
-        const docRef = await startParkingSession(currentUser, spotId);
-        console.log("Parking session created:", docRef.id);
-        window.location.href = "./my-spots.html?tab=active";
-      } catch (err) {
-        console.error("Parking session failed:", err);
-        showLoading(false);
-        alert("Could not start parking session.");
-      }
-    });
+  if (!currentUser) {
+    if (loadingEl) {
+      loadingEl.classList.remove("hidden");
+      loadingEl.textContent = "Sign-in required.";
+    }
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+    }
+    return;
+  }
+
+  const canProceed = await enforcePaymentMethod(currentUser);
+  if (!canProceed) return;
+
+  confirmBtn.addEventListener("click", async () => {
+    showLoading(true);
+
+    try {
+      const docRef = await startParkingSession(currentUser, spotId);
+      console.log("Parking session created:", docRef.id);
+      window.location.href = "./my-spots.html?tab=active";
+    } catch (err) {
+      console.error("Parking session failed:", err);
+      showLoading(false);
+      alert("Could not start parking session.");
+    }
   });
-}
+})();

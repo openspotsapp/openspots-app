@@ -36,6 +36,7 @@ async function resolveZone() {
   const docSnap = snap.docs[0];
 
   // Store BOTH
+  sessionStorage.setItem("pending_spot_id", zoneNumber);
   sessionStorage.setItem("pending_zone_number", zoneNumber);
   sessionStorage.setItem("pending_parking_doc_id", docSnap.id);
 }
