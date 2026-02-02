@@ -254,7 +254,11 @@
         });
       });
 
-      updateInfoText(spots.length, currentRadiusMiles, isFallback);
+      const availableCount = spots.reduce(
+        (count, spot) => count + (spot.available !== false ? 1 : 0),
+        0
+      );
+      updateInfoText(availableCount, currentRadiusMiles, isFallback);
     }
 
     function panToSpots(spots) {
