@@ -106,6 +106,40 @@ function showLoading(isLoading) {
   loadingEl.classList.toggle("hidden", !isLoading);
 }
 
+function renderPendingNotice(secondsLeft) {
+  let notice = document.getElementById("pendingNotice");
+
+  if (!notice) {
+    notice = document.createElement("div");
+    notice.id = "pendingNotice";
+    notice.style.marginTop = "16px";
+    notice.style.padding = "14px";
+    notice.style.borderRadius = "12px";
+    notice.style.background = "rgba(255,255,255,0.12)";
+    notice.style.color = "#ffffff";
+    notice.style.textAlign = "center";
+    notice.style.fontSize = "14px";
+    notice.style.display = "flex";
+    notice.style.flexDirection = "column";
+    notice.style.gap = "6px";
+
+    notice.innerHTML = `
+      <strong>Please confirm or vacate the parking spot</strong>
+      <span style="font-size:13px;opacity:0.85">
+        Parking will begin automatically if the spot remains occupied.
+      </span>
+      <span id="pendingCountdown" style="font-weight:600;margin-top:4px"></span>
+    `;
+
+    document.querySelector(".confirm-container").appendChild(notice);
+  }
+
+  const countdownEl = document.getElementById("pendingCountdown");
+  if (countdownEl) {
+    countdownEl.textContent = `Confirming in ${secondsLeft}s`;
+  }
+}
+
 async function confirmPendingSession(sessionId) {
   const res = await fetch("/api/parking/confirm-session", {
     method: "POST",
@@ -115,110 +149,6 @@ async function confirmPendingSession(sessionId) {
   if (!res.ok) {
     throw new Error("Failed to confirm session");
   }
-}
-
-function showPendingModal(sessionRef) {
-  const existing = document.getElementById("pendingSessionModal");
-  if (existing) return existing;
-
-  const modal = document.createElement("div");
-  modal.id = "pendingSessionModal";
-  modal.style.position = "fixed";
-  modal.style.left = "16px";
-  modal.style.right = "16px";
-  modal.style.bottom = "24px";
-  modal.style.zIndex = "9999";
-  modal.style.background = "#ffffff";
-  modal.style.borderRadius = "14px";
-  modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
-  modal.style.padding = "16px";
-  modal.style.display = "flex";
-  modal.style.flexDirection = "column";
-  modal.style.gap = "8px";
-
-  const title = document.createElement("div");
-  title.textContent = "Please confirm or vacate the parking spot";
-  title.style.fontWeight = "700";
-  title.style.fontSize = "16px";
-  title.style.color = "#1f2a24";
-
-  const subtext = document.createElement("div");
-  subtext.textContent =
-    "Parking will begin automatically if the spot remains occupied.";
-  subtext.style.fontSize = "13px";
-  subtext.style.color = "#4b5b52";
-
-  const countdown = document.createElement("div");
-  countdown.style.fontSize = "14px";
-  countdown.style.fontWeight = "600";
-  countdown.style.color = "#2d6b5f";
-
-  const button = document.createElement("button");
-  button.textContent = "Confirm Parking";
-  button.style.background = "#2d6b5f";
-  button.style.color = "#ffffff";
-  button.style.border = "none";
-  button.style.borderRadius = "10px";
-  button.style.padding = "10px 14px";
-  button.style.fontWeight = "700";
-  button.style.cursor = "pointer";
-
-  modal.appendChild(title);
-  modal.appendChild(subtext);
-  modal.appendChild(countdown);
-  modal.appendChild(button);
-
-  document.body.appendChild(modal);
-
-  let secondsLeft = 10;
-  countdown.textContent = `Confirming in ${secondsLeft}s`;
-
-  let confirmFired = false;
-
-  const countdownTimer = setInterval(async () => {
-    secondsLeft -= 1;
-    if (secondsLeft <= 0) {
-      clearInterval(countdownTimer);
-      countdown.textContent = "Confirming automatically…";
-      subtext.textContent = "Confirming automatically…";
-      button.disabled = true;
-      button.style.opacity = "0.7";
-      button.style.cursor = "not-allowed";
-      if (!confirmFired) {
-        confirmFired = true;
-        try {
-          await confirmPendingSession(sessionRef.id);
-        } catch (err) {
-          console.error("Auto-confirm failed:", err);
-        }
-      }
-      return;
-    }
-    countdown.textContent = `Confirming in ${secondsLeft}s`;
-  }, 1000);
-
-  button.addEventListener("click", async () => {
-    try {
-      if (confirmFired) return;
-      confirmFired = true;
-      await confirmPendingSession(sessionRef.id);
-      modal.remove();
-    } catch (err) {
-      console.error("Failed to confirm parking session:", err);
-    }
-  });
-
-  const unsubscribe = onSnapshot(sessionRef, (snap) => {
-    if (!snap.exists()) return;
-    const data = snap.data();
-    if (data.status === "ACTIVE") {
-      unsubscribe();
-      if (modal.isConnected) modal.remove();
-      window.location.href = "./my-spots.html?tab=active";
-    }
-  });
-
-  return modal;
 }
 
 if (!confirmBtn) {
@@ -314,19 +244,48 @@ onAuthStateChanged(auth, async (user) => {
 
     showLoading(false);
     if (sessionData.status === "PENDING") {
-      showPendingModal(sessionRef);
+      let secondsLeft = 20;
+      renderPendingNotice(secondsLeft);
+
+      const countdownTimer = setInterval(async () => {
+        secondsLeft -= 1;
+        renderPendingNotice(secondsLeft);
+
+        if (secondsLeft <= 0) {
+          clearInterval(countdownTimer);
+          renderPendingNotice(0);
+
+          confirmBtn.disabled = true;
+          confirmBtn.style.opacity = "0.7";
+
+          try {
+            await confirmPendingSession(sessionRef.id);
+          } catch (err) {
+            console.error("Auto-confirm failed:", err);
+          }
+        }
+      }, 1000);
+
+      confirmBtn.addEventListener("click", async () => {
+        confirmBtn.disabled = true;
+        try {
+          await confirmPendingSession(sessionRef.id);
+        } catch (err) {
+          console.error("Manual confirm failed:", err);
+          confirmBtn.disabled = false;
+        }
+      });
+
+      onSnapshot(sessionRef, (snap) => {
+        if (!snap.exists()) return;
+        if (snap.data().status === "ACTIVE") {
+          window.location.href = "./my-spots.html?tab=active";
+        }
+      });
     } else {
       window.location.href = "./my-spots.html?tab=active";
       return;
     }
-
-    confirmBtn.addEventListener("click", async () => {
-      try {
-        await confirmPendingSession(sessionRef.id);
-      } catch (err) {
-        console.error("Failed to confirm parking session:", err);
-      }
-    });
   } catch (err) {
     console.error("Parking session failed:", err);
     showLoading(false);
