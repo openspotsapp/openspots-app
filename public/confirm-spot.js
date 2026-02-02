@@ -8,7 +8,7 @@ import {
   getDocs,
   query,
   where,
-  updateDoc,
+  onSnapshot,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
@@ -106,6 +106,105 @@ function showLoading(isLoading) {
   loadingEl.classList.toggle("hidden", !isLoading);
 }
 
+function showPendingModal(sessionRef) {
+  const existing = document.getElementById("pendingSessionModal");
+  if (existing) return existing;
+
+  const modal = document.createElement("div");
+  modal.id = "pendingSessionModal";
+  modal.style.position = "fixed";
+  modal.style.left = "16px";
+  modal.style.right = "16px";
+  modal.style.bottom = "24px";
+  modal.style.zIndex = "9999";
+  modal.style.background = "#ffffff";
+  modal.style.borderRadius = "14px";
+  modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
+  modal.style.padding = "16px";
+  modal.style.display = "flex";
+  modal.style.flexDirection = "column";
+  modal.style.gap = "8px";
+
+  const title = document.createElement("div");
+  title.textContent = "Please confirm or vacate the parking spot";
+  title.style.fontWeight = "700";
+  title.style.fontSize = "16px";
+  title.style.color = "#1f2a24";
+
+  const subtext = document.createElement("div");
+  subtext.textContent =
+    "Parking will begin automatically if the spot remains occupied.";
+  subtext.style.fontSize = "13px";
+  subtext.style.color = "#4b5b52";
+
+  const countdown = document.createElement("div");
+  countdown.style.fontSize = "14px";
+  countdown.style.fontWeight = "600";
+  countdown.style.color = "#2d6b5f";
+
+  const button = document.createElement("button");
+  button.textContent = "Confirm Parking";
+  button.style.background = "#2d6b5f";
+  button.style.color = "#ffffff";
+  button.style.border = "none";
+  button.style.borderRadius = "10px";
+  button.style.padding = "10px 14px";
+  button.style.fontWeight = "700";
+  button.style.cursor = "pointer";
+
+  modal.appendChild(title);
+  modal.appendChild(subtext);
+  modal.appendChild(countdown);
+  modal.appendChild(button);
+
+  document.body.appendChild(modal);
+
+  let secondsLeft = 10;
+  countdown.textContent = `Confirming in ${secondsLeft}s`;
+
+  const countdownTimer = setInterval(() => {
+    secondsLeft -= 1;
+    if (secondsLeft <= 0) {
+      clearInterval(countdownTimer);
+      countdown.textContent = "Confirming automatically…";
+      subtext.textContent = "Confirming automatically…";
+      button.disabled = true;
+      button.style.opacity = "0.7";
+      button.style.cursor = "not-allowed";
+      return;
+    }
+    countdown.textContent = `Confirming in ${secondsLeft}s`;
+  }, 1000);
+
+  button.addEventListener("click", async () => {
+    try {
+      const res = await fetch("/api/parking/confirm-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: sessionRef.id })
+      });
+      if (!res.ok) {
+        throw new Error("Failed to confirm session");
+      }
+      modal.remove();
+    } catch (err) {
+      console.error("Failed to confirm parking session:", err);
+    }
+  });
+
+  const unsubscribe = onSnapshot(sessionRef, (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    if (data.status === "ACTIVE") {
+      unsubscribe();
+      if (modal.isConnected) modal.remove();
+      window.location.href = "./my-spots.html?tab=active";
+    }
+  });
+
+  return modal;
+}
+
 if (!confirmBtn) {
   throw new Error("Confirm button not found");
 }
@@ -183,7 +282,16 @@ onAuthStateChanged(auth, async (user) => {
         })
       });
 
+      const sessionSnap = await getDoc(docRef);
+      const sessionData = sessionSnap.exists() ? sessionSnap.data() : {};
+
       console.log("Parking session created:", docRef.id);
+
+      if (sessionData.status === "PENDING") {
+        showPendingModal(docRef);
+        return;
+      }
+
       window.location.href = "./my-spots.html?tab=active";
     } catch (err) {
       console.error("Parking session failed:", err);

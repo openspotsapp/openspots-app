@@ -37,6 +37,7 @@ app.use(cors({
 const PORT = process.env.PORT || 5500;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const ACTIVE_SESSION_INTERVAL = 60 * 1000; // 1 min
+const PENDING_SESSION_INTERVAL = 1000; // 1 sec
 
 setInterval(async () => {
   try {
@@ -67,6 +68,52 @@ setInterval(async () => {
     console.error("Failed to update active sessions:", err);
   }
 }, ACTIVE_SESSION_INTERVAL);
+
+setInterval(async () => {
+  try {
+    const now = admin.firestore.Timestamp.now();
+
+    const pendingSessions = await db
+      .collection("parking_sessions")
+      .where("status", "==", "PENDING")
+      .get();
+
+    for (const docSnap of pendingSessions.docs) {
+      const data = docSnap.data();
+
+      if (!data.pending_started_at) {
+        await docSnap.ref.update({
+          pending_started_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+        continue;
+      }
+
+      const startedAt = data.pending_started_at.toDate();
+      const elapsedMs = now.toMillis() - startedAt.getTime();
+      if (elapsedMs < 10000) continue;
+
+      if (!data.zone_id) continue;
+
+      const zoneRef =
+        typeof data.zone_id === "string" ? db.doc(data.zone_id) : data.zone_id;
+      const zoneSnap = await zoneRef.get();
+      if (!zoneSnap.exists) continue;
+
+      const zoneData = zoneSnap.data();
+
+      if (zoneData.is_available === false) {
+        await docSnap.ref.update({
+          status: "ACTIVE",
+          activated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+      } else {
+        await docSnap.ref.delete();
+      }
+    }
+  } catch (err) {
+    console.error("Failed to process pending sessions:", err);
+  }
+}, PENDING_SESSION_INTERVAL);
 
 // Serve PUBLIC folder
 app.use(express.static(path.join(__dirname, "public")));
@@ -342,6 +389,47 @@ app.post("/start-metered-session", async (req, res) => {
     }
 });
 
+app.post("/api/parking/confirm-session", async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+
+        if (!sessionId) {
+            return res.status(400).json({ error: "Missing sessionId" });
+        }
+
+        const sessionRef = db.collection("parking_sessions").doc(sessionId);
+        const sessionSnap = await sessionRef.get();
+
+        if (!sessionSnap.exists) {
+            return res.status(200).json({ success: true });
+        }
+
+        const data = sessionSnap.data();
+        if (data.status !== "PENDING") {
+            return res.status(200).json({ success: true });
+        }
+
+        await sessionRef.update({
+            status: "ACTIVE",
+            activated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        if (data.zone_id) {
+            const zoneRef =
+                typeof data.zone_id === "string" ? db.doc(data.zone_id) : data.zone_id;
+            await zoneRef.update({
+                is_available: false,
+                last_updated: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        return res.json({ success: true });
+    } catch (err) {
+        console.error("Failed to confirm parking session:", err);
+        return res.status(500).json({ error: "Failed to confirm session" });
+    }
+});
+
 app.post("/end-metered-session", async (req, res) => {
     try {
         const { session_id, zone_id } = req.body;
@@ -355,10 +443,22 @@ app.post("/end-metered-session", async (req, res) => {
             ended_at: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        await db.doc(zone_id).update({
+        const zoneRef = db.doc(zone_id);
+
+        await zoneRef.update({
             is_available: true,
             last_updated: admin.firestore.FieldValue.serverTimestamp()
         });
+
+        const pendingSnap = await db
+            .collection("parking_sessions")
+            .where("status", "==", "PENDING")
+            .where("zone_id", "==", zoneRef)
+            .get();
+
+        for (const pendingDoc of pendingSnap.docs) {
+            await pendingDoc.ref.delete();
+        }
 
         return res.json({ success: true });
     } catch (err) {
