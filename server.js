@@ -38,6 +38,7 @@ const PORT = process.env.PORT || 5500;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const ACTIVE_SESSION_INTERVAL = 60 * 1000; // 1 min
 const PENDING_SESSION_INTERVAL = 1000; // 1 sec
+const CONFIRM_WINDOW_MS = 30_000;
 
 setInterval(async () => {
   try {
@@ -90,7 +91,7 @@ setInterval(async () => {
 
       const startedAt = data.pending_started_at.toDate();
       const elapsedMs = now.toMillis() - startedAt.getTime();
-      if (elapsedMs < 10000) continue;
+      if (elapsedMs < CONFIRM_WINDOW_MS) continue;
 
       if (!data.zone_id) continue;
 

@@ -224,11 +224,15 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
 
+    const CONFIRM_WINDOW_MS = 30_000;
     const pendingStartedAt = sessionData.pending_started_at
       ? sessionData.pending_started_at.toDate()
       : new Date();
     const elapsedMs = Date.now() - pendingStartedAt.getTime();
-    let secondsLeft = Math.max(0, Math.ceil(20 - elapsedMs / 1000));
+    let secondsLeft = Math.max(
+      0,
+      Math.ceil((CONFIRM_WINDOW_MS - elapsedMs) / 1000)
+    );
     renderPendingNotice(secondsLeft);
 
     const countdownTimer = setInterval(async () => {
