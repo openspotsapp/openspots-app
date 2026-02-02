@@ -457,7 +457,7 @@ app.post("/api/parking/confirm-session", async (req, res) => {
             activated_at: admin.firestore.FieldValue.serverTimestamp(),
             rate_per_minute: ratePerMinute,
             regulation_type: zoneData.regulation_type,
-            sensor_id: zoneData.sensor_id,
+            sensor_id: data.zone_number,
             payment_method: "MOBILE",
             price_charged: 0,
             total_minutes: 0
