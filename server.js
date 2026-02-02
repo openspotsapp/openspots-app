@@ -436,9 +436,25 @@ app.post("/api/parking/confirm-session", async (req, res) => {
             return res.status(200).json({ success: true });
         }
 
+        let zoneData = {};
+        if (data.zone_id) {
+            const zoneRef =
+                typeof data.zone_id === "string" ? db.doc(data.zone_id) : data.zone_id;
+            const zoneSnap = await zoneRef.get();
+            if (zoneSnap.exists) {
+                zoneData = zoneSnap.data() || {};
+            }
+        }
+
         await sessionRef.update({
             status: "ACTIVE",
-            activated_at: admin.firestore.FieldValue.serverTimestamp()
+            activated_at: admin.firestore.FieldValue.serverTimestamp(),
+            rate_per_minute: zoneData.rate_per_minute,
+            regulation_type: zoneData.regulation_type,
+            sensor_id: zoneData.sensor_id,
+            payment_method: "MOBILE",
+            price_charged: 0,
+            total_minutes: 0
         });
 
         if (data.zone_id) {
