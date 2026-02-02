@@ -59,10 +59,10 @@
 
       // Save to Firestore
       await setDoc(doc(db, "users", currentUser.uid), {
-        phone,
-        licensePlate: plate,
-        vehicleModel: model,
-        vehicleColor: color,
+        phone_number: phone,
+        vehicle_license: plate,
+        vehicle_make_model: model,
+        vehicle_color: color,
         setupComplete: true
       }, { merge: true });
 
