@@ -106,6 +106,17 @@ function showLoading(isLoading) {
   loadingEl.classList.toggle("hidden", !isLoading);
 }
 
+async function confirmPendingSession(sessionId) {
+  const res = await fetch("/api/parking/confirm-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId })
+  });
+  if (!res.ok) {
+    throw new Error("Failed to confirm session");
+  }
+}
+
 function showPendingModal(sessionRef) {
   const existing = document.getElementById("pendingSessionModal");
   if (existing) return existing;
@@ -162,7 +173,9 @@ function showPendingModal(sessionRef) {
   let secondsLeft = 10;
   countdown.textContent = `Confirming in ${secondsLeft}s`;
 
-  const countdownTimer = setInterval(() => {
+  let confirmFired = false;
+
+  const countdownTimer = setInterval(async () => {
     secondsLeft -= 1;
     if (secondsLeft <= 0) {
       clearInterval(countdownTimer);
@@ -171,6 +184,14 @@ function showPendingModal(sessionRef) {
       button.disabled = true;
       button.style.opacity = "0.7";
       button.style.cursor = "not-allowed";
+      if (!confirmFired) {
+        confirmFired = true;
+        try {
+          await confirmPendingSession(sessionRef.id);
+        } catch (err) {
+          console.error("Auto-confirm failed:", err);
+        }
+      }
       return;
     }
     countdown.textContent = `Confirming in ${secondsLeft}s`;
@@ -178,14 +199,9 @@ function showPendingModal(sessionRef) {
 
   button.addEventListener("click", async () => {
     try {
-      const res = await fetch("/api/parking/confirm-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: sessionRef.id })
-      });
-      if (!res.ok) {
-        throw new Error("Failed to confirm session");
-      }
+      if (confirmFired) return;
+      confirmFired = true;
+      await confirmPendingSession(sessionRef.id);
       modal.remove();
     } catch (err) {
       console.error("Failed to confirm parking session:", err);
@@ -237,32 +253,51 @@ onAuthStateChanged(auth, async (user) => {
   const canProceed = await enforcePaymentMethod(user);
   if (!canProceed) return;
 
-  confirmBtn.addEventListener("click", async () => {
-    showLoading(true);
+  showLoading(true);
 
-    try {
-      const q = query(
-        collection(db, "private_metered_parking"),
-        where("zone_number", "==", spotId)
-      );
-      const snap = await getDocs(q);
+  try {
+    const q = query(
+      collection(db, "private_metered_parking"),
+      where("zone_number", "==", spotId)
+    );
+    const snap = await getDocs(q);
 
-      if (snap.empty) {
-        showLoading(false);
-        alert("Parking zone not found. Please rescan the QR code.");
-        return;
+    if (snap.empty) {
+      showLoading(false);
+      alert("Parking zone not found. Please rescan the QR code.");
+      return;
+    }
+
+    const zoneDoc = snap.docs[0];
+    const zone = zoneDoc.data();
+    const ratePerHour = Number(zone.rate_per_hour) || 0;
+    const pendingKey = `pending_session_id_${spotId}`;
+
+    let sessionRef = null;
+    const existingId = sessionStorage.getItem(pendingKey);
+    if (existingId) {
+      const existingRef = doc(db, "parking_sessions", existingId);
+      const existingSnap = await getDoc(existingRef);
+      if (existingSnap.exists()) {
+        sessionRef = existingRef;
+        const existingData = existingSnap.data();
+        if (existingData.status === "ACTIVE") {
+          window.location.href = "./my-spots.html?tab=active";
+          return;
+        }
+      } else {
+        sessionStorage.removeItem(pendingKey);
       }
+    }
 
-      const zoneDoc = snap.docs[0];
-      const zone = zoneDoc.data();
-      const ratePerHour = Number(zone.rate_per_hour) || 0;
-
-      const docRef = await addDoc(collection(db, "parking_sessions"), {
+    if (!sessionRef) {
+      sessionRef = await addDoc(collection(db, "parking_sessions"), {
         user_id: doc(db, "users", user.uid),
         sensor_id: spotId,
         arrival_time: serverTimestamp(),
         created_at: serverTimestamp(),
-        status: "ACTIVE",
+        status: "PENDING",
+        pending_started_at: serverTimestamp(),
         regulation_type: zone.regulation_type || "METERED",
         rate_per_minute: ratePerHour / 60,
         price_charged: 0,
@@ -271,32 +306,30 @@ onAuthStateChanged(auth, async (user) => {
         after_hours_fee: 0,
         zone_id: doc(db, "private_metered_parking", zoneDoc.id)
       });
-
-      await fetch("/start-metered-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          zone_id: zoneDoc.ref.path
-        })
-      });
-
-      const sessionSnap = await getDoc(docRef);
-      const sessionData = sessionSnap.exists() ? sessionSnap.data() : {};
-
-      console.log("Parking session created:", docRef.id);
-
-      if (sessionData.status === "PENDING") {
-        showPendingModal(docRef);
-        return;
-      }
-
-      window.location.href = "./my-spots.html?tab=active";
-    } catch (err) {
-      console.error("Parking session failed:", err);
-      showLoading(false);
-      alert("Could not start parking session.");
+      sessionStorage.setItem(pendingKey, sessionRef.id);
     }
-  });
+
+    const sessionSnap = await getDoc(sessionRef);
+    const sessionData = sessionSnap.exists() ? sessionSnap.data() : {};
+
+    showLoading(false);
+    if (sessionData.status === "PENDING") {
+      showPendingModal(sessionRef);
+    } else {
+      window.location.href = "./my-spots.html?tab=active";
+      return;
+    }
+
+    confirmBtn.addEventListener("click", async () => {
+      try {
+        await confirmPendingSession(sessionRef.id);
+      } catch (err) {
+        console.error("Failed to confirm parking session:", err);
+      }
+    });
+  } catch (err) {
+    console.error("Parking session failed:", err);
+    showLoading(false);
+    alert("Could not start parking session.");
+  }
 });

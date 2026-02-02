@@ -101,7 +101,10 @@ setInterval(async () => {
 
       const zoneData = zoneSnap.data();
 
-      if (zoneData.is_available === false) {
+      const occupied =
+        zoneData.is_available === false || zoneData.is_available === "false";
+
+      if (occupied) {
         await docSnap.ref.update({
           status: "ACTIVE",
           activated_at: admin.firestore.FieldValue.serverTimestamp()
