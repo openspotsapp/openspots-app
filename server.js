@@ -404,6 +404,7 @@ app.post("/api/parking/create-pending", async (req, res) => {
             status: "PENDING",
             pending_started_at: admin.firestore.FieldValue.serverTimestamp(),
             arrival_time: admin.firestore.FieldValue.serverTimestamp(),
+            created_at: admin.firestore.FieldValue.serverTimestamp(),
             zone_id: db.doc(zone_id),
             zone_number,
             user_id: db.collection("users").doc(user_id)
@@ -446,10 +447,15 @@ app.post("/api/parking/confirm-session", async (req, res) => {
             }
         }
 
+        const ratePerMinute =
+            typeof zoneData.rate_per_hour === "number"
+                ? Number((zoneData.rate_per_hour / 60).toFixed(6))
+                : 0;
+
         await sessionRef.update({
             status: "ACTIVE",
             activated_at: admin.firestore.FieldValue.serverTimestamp(),
-            rate_per_minute: zoneData.rate_per_minute,
+            rate_per_minute: ratePerMinute,
             regulation_type: zoneData.regulation_type,
             sensor_id: zoneData.sensor_id,
             payment_method: "MOBILE",
