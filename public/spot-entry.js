@@ -33,12 +33,9 @@ async function resolveZone() {
     throw new Error("Zone not found");
   }
 
-  const docSnap = snap.docs[0];
-
-  // Store BOTH
-  sessionStorage.setItem("pending_spot_id", zoneNumber);
-  sessionStorage.setItem("pending_zone_number", zoneNumber);
-  sessionStorage.setItem("pending_parking_doc_id", docSnap.id);
+  if (!snap.docs[0]) {
+    throw new Error("Zone not found");
+  }
 }
 
 // OPTIONAL: add venue later
@@ -60,6 +57,11 @@ setTimeout(() => {
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
       const data = snap.exists() ? snap.data() : {};
+
+      if (data.setupComplete !== true) {
+        window.location.href = withSpotParam("./accSetup.html");
+        return;
+      }
 
       if (data.hasPaymentMethod === true) {
         window.location.href = withSpotParam("./confirm-spot.html");

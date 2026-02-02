@@ -1,29 +1,17 @@
 import { auth, db } from "./firebase-init.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import {
-  addDoc,
   collection,
   doc,
   getDoc,
   getDocs,
   query,
   where,
-  onSnapshot,
-  serverTimestamp
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 const params = new URLSearchParams(window.location.search);
-const spotFromUrl = params.get("spot");
-
-if (spotFromUrl) {
-  sessionStorage.setItem("pending_spot_id", spotFromUrl);
-}
-
-let spotId =
-  spotFromUrl ||
-  sessionStorage.getItem("pending_spot_id") ||
-  sessionStorage.getItem("pending_zone_number");
-const pendingParkingDocId = sessionStorage.getItem("pending_parking_doc_id");
+const spotId = params.get("spot");
 
 const spotLabelEl = document.getElementById("spotLabel");
 const venueLabelEl = document.getElementById("venueLabel");
@@ -36,44 +24,17 @@ if (spotLabelEl && spotId) {
 
 async function loadSpotMeta() {
   try {
-    // 🔁 Fallback: resolve venue via spotId
-    if (!pendingParkingDocId && spotId) {
-      const q = query(
-        collection(db, "private_metered_parking"),
-        where("zone_number", "==", spotId)
-      );
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const data = snap.docs[0].data();
-        if (venueLabelEl) {
-          venueLabelEl.innerText =
-            data.location_name || data.venue_name || "Parking Location";
-        }
-      }
-      return;
-    }
-
-    if (!pendingParkingDocId) return;
-
-    const snap = await getDoc(
-      doc(db, "private_metered_parking", pendingParkingDocId)
+    if (!spotId) return;
+    const q = query(
+      collection(db, "private_metered_parking"),
+      where("zone_number", "==", spotId)
     );
-    if (!snap.exists()) return;
-
-    const data = snap.data();
-
-    if (!spotId && data.zone_number) {
-      spotId = data.zone_number;
-      sessionStorage.setItem("pending_spot_id", spotId);
-    }
-
+    const snap = await getDocs(q);
+    if (snap.empty) return;
+    const data = snap.docs[0].data();
     if (venueLabelEl) {
       venueLabelEl.innerText =
-        data.location_name || data.venue_name || venueLabelEl.innerText;
-    }
-
-    if (spotLabelEl && spotId) {
-      spotLabelEl.innerText = `You are parking in Spot ${spotId}`;
+        data.location_name || data.venue_name || "Parking Location";
     }
   } catch (err) {
     console.error("Failed to load spot metadata:", err);
@@ -96,7 +57,9 @@ async function enforcePaymentMethod(user) {
     console.error("Failed to check payment status:", err);
   }
 
-  window.location.href = "./add-payment.html";
+  window.location.href = spotId
+    ? `./add-payment.html?spot=${encodeURIComponent(spotId)}`
+    : "./add-payment.html";
   return false;
 }
 
@@ -199,9 +162,8 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     const zoneDoc = snap.docs[0];
-    const zone = zoneDoc.data();
-    const ratePerHour = Number(zone.rate_per_hour) || 0;
     const pendingKey = `pending_session_id_${spotId}`;
+    const userRef = doc(db, "users", user.uid);
 
     let sessionRef = null;
     const existingId = sessionStorage.getItem(pendingKey);
@@ -210,82 +172,100 @@ onAuthStateChanged(auth, async (user) => {
       const existingSnap = await getDoc(existingRef);
       if (existingSnap.exists()) {
         sessionRef = existingRef;
-        const existingData = existingSnap.data();
-        if (existingData.status === "ACTIVE") {
-          window.location.href = "./my-spots.html?tab=active";
-          return;
-        }
       } else {
         sessionStorage.removeItem(pendingKey);
       }
     }
 
     if (!sessionRef) {
-      sessionRef = await addDoc(collection(db, "parking_sessions"), {
-        user_id: doc(db, "users", user.uid),
-        sensor_id: spotId,
-        arrival_time: serverTimestamp(),
-        created_at: serverTimestamp(),
-        status: "PENDING",
-        pending_started_at: serverTimestamp(),
-        regulation_type: zone.regulation_type || "METERED",
-        rate_per_minute: ratePerHour / 60,
-        price_charged: 0,
-        total_minutes: 0,
-        payment_method: "MOBILE",
-        after_hours_fee: 0,
-        zone_id: doc(db, "private_metered_parking", zoneDoc.id)
+      const existingSessions = await getDocs(
+        query(
+          collection(db, "parking_sessions"),
+          where("user_id", "==", userRef),
+          where("zone_number", "==", spotId),
+          where("status", "in", ["PENDING", "ACTIVE"])
+        )
+      );
+
+      if (!existingSessions.empty) {
+        sessionRef = existingSessions.docs[0].ref;
+      }
+    }
+
+    if (!sessionRef) {
+      const response = await fetch("/api/parking/create-pending", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          zone_id: zoneDoc.ref.path,
+          zone_number: spotId,
+          user_id: user.uid
+        })
       });
-      sessionStorage.setItem(pendingKey, sessionRef.id);
+      const data = await response.json();
+      if (!response.ok || !data.sessionId) {
+        throw new Error(data.error || "Failed to create pending session");
+      }
+      sessionRef = doc(db, "parking_sessions", data.sessionId);
+      sessionStorage.setItem(pendingKey, data.sessionId);
     }
 
     const sessionSnap = await getDoc(sessionRef);
-    const sessionData = sessionSnap.exists() ? sessionSnap.data() : {};
+    if (!sessionSnap.exists()) {
+      throw new Error("Pending session not found");
+    }
+
+    const sessionData = sessionSnap.data();
 
     showLoading(false);
-    if (sessionData.status === "PENDING") {
-      let secondsLeft = 20;
-      renderPendingNotice(secondsLeft);
 
-      const countdownTimer = setInterval(async () => {
-        secondsLeft -= 1;
-        renderPendingNotice(secondsLeft);
-
-        if (secondsLeft <= 0) {
-          clearInterval(countdownTimer);
-          renderPendingNotice(0);
-
-          confirmBtn.disabled = true;
-          confirmBtn.style.opacity = "0.7";
-
-          try {
-            await confirmPendingSession(sessionRef.id);
-          } catch (err) {
-            console.error("Auto-confirm failed:", err);
-          }
-        }
-      }, 1000);
-
-      confirmBtn.addEventListener("click", async () => {
-        confirmBtn.disabled = true;
-        try {
-          await confirmPendingSession(sessionRef.id);
-        } catch (err) {
-          console.error("Manual confirm failed:", err);
-          confirmBtn.disabled = false;
-        }
-      });
-
-      onSnapshot(sessionRef, (snap) => {
-        if (!snap.exists()) return;
-        if (snap.data().status === "ACTIVE") {
-          window.location.href = "./my-spots.html?tab=active";
-        }
-      });
-    } else {
+    if (sessionData.status === "ACTIVE") {
       window.location.href = "./my-spots.html?tab=active";
       return;
     }
+
+    const pendingStartedAt = sessionData.pending_started_at
+      ? sessionData.pending_started_at.toDate()
+      : new Date();
+    const elapsedMs = Date.now() - pendingStartedAt.getTime();
+    let secondsLeft = Math.max(0, Math.ceil(20 - elapsedMs / 1000));
+    renderPendingNotice(secondsLeft);
+
+    const countdownTimer = setInterval(async () => {
+      secondsLeft -= 1;
+      renderPendingNotice(Math.max(0, secondsLeft));
+
+      if (secondsLeft <= 0) {
+        clearInterval(countdownTimer);
+        renderPendingNotice(0);
+
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = "0.7";
+
+        try {
+          await confirmPendingSession(sessionRef.id);
+        } catch (err) {
+          console.error("Auto-confirm failed:", err);
+        }
+      }
+    }, 1000);
+
+    confirmBtn.addEventListener("click", async () => {
+      confirmBtn.disabled = true;
+      try {
+        await confirmPendingSession(sessionRef.id);
+      } catch (err) {
+        console.error("Manual confirm failed:", err);
+        confirmBtn.disabled = false;
+      }
+    });
+
+    onSnapshot(sessionRef, (snap) => {
+      if (!snap.exists()) return;
+      if (snap.data().status === "ACTIVE") {
+        window.location.href = "./my-spots.html?tab=active";
+      }
+    });
   } catch (err) {
     console.error("Parking session failed:", err);
     showLoading(false);

@@ -392,6 +392,30 @@ app.post("/start-metered-session", async (req, res) => {
     }
 });
 
+app.post("/api/parking/create-pending", async (req, res) => {
+    try {
+        const { zone_id, zone_number, user_id } = req.body;
+
+        if (!zone_id || !zone_number || !user_id) {
+            return res.status(400).json({ error: "Missing zone_id, zone_number, or user_id" });
+        }
+
+        const sessionRef = await db.collection("parking_sessions").add({
+            status: "PENDING",
+            pending_started_at: admin.firestore.FieldValue.serverTimestamp(),
+            arrival_time: admin.firestore.FieldValue.serverTimestamp(),
+            zone_id: db.doc(zone_id),
+            zone_number,
+            user_id: db.collection("users").doc(user_id)
+        });
+
+        return res.json({ sessionId: sessionRef.id });
+    } catch (err) {
+        console.error("Failed to create pending session:", err);
+        return res.status(500).json({ error: "Failed to create pending session" });
+    }
+});
+
 app.post("/api/parking/confirm-session", async (req, res) => {
     try {
         const { sessionId } = req.body;

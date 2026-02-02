@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const addPaymentBtn = document.getElementById("addPaymentBtn");
   const userEmailEl = document.getElementById("userEmail");
   const stripe = window.Stripe ? Stripe(stripePublicKey) : null;
+  const params = new URLSearchParams(window.location.search);
+  const spot = params.get("spot");
 
   addPaymentBtn.disabled = true;
   setStatus("Checking your account...");
@@ -35,7 +37,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         fullName || data.display_name || user.email || "Unknown user";
 
       if (data.hasPaymentMethod === true) {
-        window.location.href = "./confirm-spot.html?spot=ROM-01";
+        window.location.href = spot
+          ? `./confirm-spot.html?spot=${encodeURIComponent(spot)}`
+          : "./confirm-spot.html";
         return;
       }
 
@@ -51,11 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   addPaymentBtn.addEventListener("click", async () => {
     const user = auth.currentUser;
-    const params = new URLSearchParams(window.location.search);
-    const spot =
-      params.get("spot") ||
-      sessionStorage.getItem("pending_spot_id") ||
-      sessionStorage.getItem("pending_zone_number");
+    const spotParam = spot;
 
     if (!user) {
       setStatus("Please refresh to continue.", true);
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          spot
+          spot: spotParam
         })
       });
 

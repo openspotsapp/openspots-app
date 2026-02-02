@@ -29,6 +29,9 @@
       const signupForm = document.getElementById("signupForm");
       if (!signupForm) return;
 
+      const params = new URLSearchParams(window.location.search);
+      const spot = params.get("spot");
+
       signupForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -60,7 +63,9 @@
             setupComplete: false
           });
 
-          window.location.href = "accSetup.html";
+          window.location.href = spot
+            ? `accSetup.html?spot=${encodeURIComponent(spot)}`
+            : "accSetup.html";
         } catch (err) {
           errorBox.style.display = "block";
           errorBox.textContent = "Account could not be created.";
