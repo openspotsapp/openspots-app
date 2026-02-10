@@ -21,13 +21,28 @@ switch (mode) {
     applyActionCode(auth, oobCode)
       .then(() => {
         // Email verified successfully
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            // User is already logged in → send them to app
-            window.location.href = "/nearby.html";
+        let resolved = false;
+        const redirect = (url) => {
+          if (resolved) return;
+          resolved = true;
+          window.location.href = url;
+        };
+
+        const timeoutId = setTimeout(() => {
+          // Fallback if auth state hasn't hydrated yet
+          if (auth.currentUser) {
+            redirect("/nearby.html");
           } else {
-            // User is not logged in → send to login
-            window.location.href = "/login.html";
+            redirect("/login.html");
+          }
+        }, 1200);
+
+        onAuthStateChanged(auth, (user) => {
+          clearTimeout(timeoutId);
+          if (user) {
+            redirect("/nearby.html");
+          } else {
+            redirect("/login.html");
           }
         });
       })
