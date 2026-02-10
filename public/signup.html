@@ -63,6 +63,16 @@
             setupComplete: false
           });
 
+          try {
+            await fetch("https://openspots.app/api/send-welcome-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ uid: user.uid })
+            });
+          } catch (e) {
+            console.warn("Welcome email failed (non-blocking)", e);
+          }
+
           window.location.href = spot
             ? `accSetup.html?spot=${encodeURIComponent(spot)}`
             : "accSetup.html";

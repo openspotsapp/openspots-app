@@ -24,6 +24,77 @@ export async function sendEmail({ to, subject, html, text }) {
   }
 }
 
+// ============================
+// EMAIL TEMPLATE HELPERS
+// ============================
+function baseEmailLayout({ title, preheader, innerHtml, supportEmail }) {
+  // Preheader hidden text improves inbox preview
+  const hiddenPreheader = preheader
+    ? `<div style="display:none; font-size:1px; color:#0f2f28; line-height:1px; max-height:0px; max-width:0px; opacity:0; overflow:hidden;">${preheader}</div>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0; padding:0; background:#0f2f28;">
+  ${hiddenPreheader}
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f2f28; padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="max-width:600px; background:#0b3a31; border-radius:16px; overflow:hidden;">
+          <tr>
+            <td style="padding:20px; text-align:center; color:#ffffff; font-family:Arial,sans-serif;">
+              <h2 style="margin:0;">${title}</h2>
+            </td>
+          </tr>
+
+          ${innerHtml}
+
+          <tr>
+            <td style="padding:14px; text-align:center; font-size:12px;
+              color:#b7e3d8; font-family:Arial,sans-serif;">
+              Need help? <a href="mailto:${supportEmail}" style="color:#b7e3d8; text-decoration:underline;">${supportEmail}</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function socialBarHtml({ supportEmail, socials }) {
+  // IMPORTANT: Use your *_green.png URLs (baked color) for consistent rendering.
+  // socials = [{ href, img, alt }]
+  const cells = socials.map(s => `
+    <td style="padding:0 10px;">
+      <a href="${s.href}">
+        <img src="${s.img}" width="28" height="28" style="display:block; border:0; outline:none; text-decoration:none;" alt="${s.alt}" />
+      </a>
+    </td>
+  `).join("");
+
+  return `
+  <tr>
+    <td style="background:#ffffff; padding:16px;">
+      <table align="center" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          ${cells}
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+}
+
+// ============================
+// 1) WELCOME EMAIL
+// ============================
+
 export function buildWelcomeEmail({ firstName, appUrl, supportEmail }) {
   const subject = "Welcome to OpenSpots";
 
@@ -169,77 +240,6 @@ Need help? ${supportEmail}
   return { subject, html, text };
 }
 
-// ============================
-// EMAIL TEMPLATE HELPERS
-// ============================
-function baseEmailLayout({ title, preheader, innerHtml, supportEmail }) {
-  // Preheader hidden text improves inbox preview
-  const hiddenPreheader = preheader
-    ? `<div style="display:none; font-size:1px; color:#0f2f28; line-height:1px; max-height:0px; max-width:0px; opacity:0; overflow:hidden;">${preheader}</div>`
-    : "";
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-</head>
-<body style="margin:0; padding:0; background:#0f2f28;">
-  ${hiddenPreheader}
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f2f28; padding:24px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0"
-          style="max-width:600px; background:#0b3a31; border-radius:16px; overflow:hidden;">
-          <tr>
-            <td style="padding:20px; text-align:center; color:#ffffff; font-family:Arial,sans-serif;">
-              <h2 style="margin:0;">${title}</h2>
-            </td>
-          </tr>
-
-          ${innerHtml}
-
-          <tr>
-            <td style="padding:14px; text-align:center; font-size:12px;
-              color:#b7e3d8; font-family:Arial,sans-serif;">
-              Need help? <a href="mailto:${supportEmail}" style="color:#b7e3d8; text-decoration:underline;">${supportEmail}</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function socialBarHtml({ supportEmail, socials }) {
-  // IMPORTANT: Use your *_green.png URLs (baked color) for consistent rendering.
-  // socials = [{ href, img, alt }]
-  const cells = socials.map(s => `
-    <td style="padding:0 10px;">
-      <a href="${s.href}">
-        <img src="${s.img}" width="28" height="28" style="display:block; border:0; outline:none; text-decoration:none;" alt="${s.alt}" />
-      </a>
-    </td>
-  `).join("");
-
-  return `
-  <tr>
-    <td style="background:#ffffff; padding:16px;">
-      <table align="center" cellpadding="0" cellspacing="0" role="presentation">
-        <tr>
-          ${cells}
-        </tr>
-      </table>
-    </td>
-  </tr>`;
-}
-
-// ============================
-// 1) WELCOME EMAIL
-// ============================
-
 
 // ============================
 // 2) PAYMENT METHOD ADDED
@@ -263,6 +263,18 @@ export function buildPaymentMethodAddedEmail({
     : "Your payment method is now saved.";
 
   const innerHtml = `
+    <!-- BANNER -->
+    <tr>
+      <td>
+        <img
+          src="https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/vn7j7u7z71uh/email-banner.png"
+          width="600"
+          style="display:block; width:100%;"
+          alt="OpenSpots"
+        />
+      </td>
+    </tr>
+
     <tr>
       <td style="padding:20px; color:#ffffff; font-family:Arial,sans-serif; line-height:1.5;">
         <p style="margin-top:0;">Hi ${firstName || "there"},</p>
@@ -296,7 +308,7 @@ Need help? ${supportEmail}
 }
 
 // ============================
-// 3) PARKING STARTED (“Chipotle moment”)
+// 3) PARKING STARTED 
 // ============================
 export function buildParkingStartedEmail({
   firstName,
@@ -312,6 +324,18 @@ export function buildParkingStartedEmail({
   const preheader = `Session started${zoneNumber ? ` • Zone ${zoneNumber}` : ""}`;
 
   const innerHtml = `
+    <!-- BANNER -->
+    <tr>
+      <td>
+        <img
+          src="https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/vn7j7u7z71uh/email-banner.png"
+          width="600"
+          style="display:block; width:100%;"
+          alt="OpenSpots"
+        />
+      </td>
+    </tr>
+
     <tr>
       <td style="padding:20px; color:#ffffff; font-family:Arial,sans-serif; line-height:1.5;">
         <p style="margin-top:0;">Hi ${firstName || "there"},</p>
@@ -377,6 +401,18 @@ export function buildParkingReceiptEmail({
   const preheader = `Receipt${zoneNumber ? ` • Zone ${zoneNumber}` : ""}`;
 
   const innerHtml = `
+    <!-- BANNER -->
+    <tr>
+      <td>
+        <img
+          src="https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/vn7j7u7z71uh/email-banner.png"
+          width="600"
+          style="display:block; width:100%;"
+          alt="OpenSpots"
+        />
+      </td>
+    </tr>
+
     <tr>
       <td style="padding:20px; color:#ffffff; font-family:Arial,sans-serif; line-height:1.5;">
         <p style="margin-top:0;">Hi ${firstName || "there"},</p>
@@ -440,6 +476,18 @@ export function buildParkingCancelledEmail({
   const preheader = reason || "No charge was made.";
 
   const innerHtml = `
+    <!-- BANNER -->
+    <tr>
+      <td>
+        <img
+          src="https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/vn7j7u7z71uh/email-banner.png"
+          width="600"
+          style="display:block; width:100%;"
+          alt="OpenSpots"
+        />
+      </td>
+    </tr>
+
     <tr>
       <td style="padding:20px; color:#ffffff; font-family:Arial,sans-serif; line-height:1.5;">
         <p style="margin-top:0;">Hi ${firstName || "there"},</p>
