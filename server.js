@@ -44,6 +44,12 @@ const SOCIALS = [
   { href: "https://tiktok.com/@openspots", img: "https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/8ivm5hp3yq17/badge_tiktok.png", alt: "TikTok" },
   { href: "https://youtube.com/@openspotsapp", img: "https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/m1160f9479nf/badge_youtube.png", alt: "YouTube" },
 ];
+const resolveUserFirstName = (user) =>
+  user?.first_name ||
+  user?.firstName ||
+  user?.display_name ||
+  user?.displayName ||
+  "";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const ACTIVE_SESSION_INTERVAL = 60 * 1000; // 1 min
 const PENDING_SESSION_INTERVAL = 1000; // 1 sec
@@ -221,7 +227,7 @@ app.post(
 
             if (toEmail) {
               const email = buildPaymentMethodAddedEmail({
-                firstName: user?.firstName || user?.displayName || "",
+                firstName: resolveUserFirstName(user),
                 appUrl: process.env.BASE_URL || "https://openspots.app",
                 supportEmail: "support@openspots.app",
                 cardBrand: card.brand || null,
@@ -491,7 +497,7 @@ app.post("/api/send-welcome-email", async (req, res) => {
         }
 
         const email = buildWelcomeEmail({
-            firstName: user.firstName || user.displayName || "",
+            firstName: resolveUserFirstName(user),
             appUrl: process.env.BASE_URL || "https://openspots.app",
             supportEmail: "support@openspots.app"
         });
@@ -575,7 +581,7 @@ app.post("/api/parking/confirm-session", async (req, res) => {
 
             if (toEmail) {
                 const email = buildParkingStartedEmail({
-                    firstName: user?.firstName || user?.displayName || "",
+                    firstName: resolveUserFirstName(user),
                     supportEmail: "support@openspots.app",
                     appUrl: process.env.BASE_URL || "https://openspots.app",
                     zoneNumber: data.zone_number,
@@ -623,7 +629,7 @@ app.post("/end-metered-session", async (req, res) => {
 
                 if (toEmail) {
                     const email = buildParkingReceiptEmail({
-                        firstName: user?.firstName || user?.displayName || "",
+                        firstName: resolveUserFirstName(user),
                         supportEmail: "support@openspots.app",
                         appUrl: process.env.BASE_URL || "https://openspots.app",
                         zoneNumber: s.zone_number,
