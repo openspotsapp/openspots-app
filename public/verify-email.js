@@ -1,4 +1,8 @@
-import { getAuth, applyActionCode } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import {
+  getAuth,
+  applyActionCode,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import { app } from "./firebase-init.js";
 
 const auth = getAuth(app);
@@ -12,10 +16,31 @@ if (!oobCode) {
 
 applyActionCode(auth, oobCode)
   .then(() => {
-    statusEl.textContent = "Email verified! Redirecting to login…";
-    setTimeout(() => {
-      window.location.href = "/login.html";
-    }, 2500);
+    statusEl.textContent = "Email verified! Redirecting…";
+
+    let resolved = false;
+    const redirect = (url) => {
+      if (resolved) return;
+      resolved = true;
+      window.location.href = url;
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (auth.currentUser) {
+        redirect("/nearby.html");
+      } else {
+        redirect("/login.html");
+      }
+    }, 1200);
+
+    onAuthStateChanged(auth, (user) => {
+      clearTimeout(timeoutId);
+      if (user) {
+        redirect("/nearby.html");
+      } else {
+        redirect("/login.html");
+      }
+    });
   })
   .catch((error) => {
     console.error("Verification error:", error);

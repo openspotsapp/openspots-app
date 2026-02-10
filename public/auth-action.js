@@ -1,9 +1,3 @@
-import { auth } from "./firebase-init.js";
-import {
-  applyActionCode,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-
 const params = new URLSearchParams(window.location.search);
 const mode = params.get("mode");
 const oobCode = params.get("oobCode");
@@ -18,38 +12,7 @@ switch (mode) {
     break;
 
   case "verifyEmail":
-    applyActionCode(auth, oobCode)
-      .then(() => {
-        // Email verified successfully
-        let resolved = false;
-        const redirect = (url) => {
-          if (resolved) return;
-          resolved = true;
-          window.location.href = url;
-        };
-
-        const timeoutId = setTimeout(() => {
-          // Fallback if auth state hasn't hydrated yet
-          if (auth.currentUser) {
-            redirect("/nearby.html");
-          } else {
-            redirect("/login.html");
-          }
-        }, 1200);
-
-        onAuthStateChanged(auth, (user) => {
-          clearTimeout(timeoutId);
-          if (user) {
-            redirect("/nearby.html");
-          } else {
-            redirect("/login.html");
-          }
-        });
-      })
-      .catch((error) => {
-        console.error("Email verification failed:", error);
-        window.location.href = "/login.html";
-      });
+    window.location.href = `/verify-email.html?oobCode=${oobCode}`;
     break;
 
   case "verifyAndChangeEmail":
