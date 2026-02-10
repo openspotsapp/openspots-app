@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const stripe = window.Stripe ? Stripe(stripePublicKey) : null;
   const params = new URLSearchParams(window.location.search);
   const spot = params.get("spot");
+  const flow = params.get("flow");
 
   addPaymentBtn.disabled = true;
   setStatus("Checking your account...");
@@ -83,7 +84,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          spot: spotParam
+          spot: spotParam,
+          flow: flow || null
         })
       });
 

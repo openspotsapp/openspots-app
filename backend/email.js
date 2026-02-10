@@ -308,7 +308,90 @@ Need help? ${supportEmail}
 }
 
 // ============================
-// 3) PARKING STARTED 
+// 3) RESERVATION CONFIRMED
+// ============================
+export function buildReservationConfirmationEmail({
+  to,
+  firstName,
+  venueName,
+  eventName,
+  spotLabel,
+  qrCodeUrl,
+  confirmationCode,
+  appUrl,
+  supportEmail
+}) {
+  const subject = "Reservation Confirmed 🎟️ — Your Spot Is Ready";
+  const title = "Reservation confirmed 🎟️";
+  const preheader = `${venueName || "Your venue"} reservation is confirmed.`;
+
+  const innerHtml = `
+    <!-- BANNER -->
+    <tr>
+      <td>
+        <img
+          src="https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/vn7j7u7z71uh/email-banner.png"
+          width="600"
+          style="display:block; width:100%;"
+          alt="OpenSpots"
+        />
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding:20px; color:#ffffff; font-family:Arial,sans-serif; line-height:1.5;">
+        <p style="margin-top:0;">Hi ${firstName || "there"},</p>
+        <p style="margin:0 0 12px;">Your reservation is confirmed.</p>
+
+        <table cellpadding="0" cellspacing="0" style="width:100%; background:#0f2f28; border-radius:12px; margin:14px 0;">
+          <tr>
+            <td style="padding:12px; color:#b7e3d8; font-family:Arial,sans-serif; font-size:13px;">
+              <div><strong style="color:#ffffff;">Venue:</strong> ${venueName || "-"}</div>
+              <div><strong style="color:#ffffff;">Event:</strong> ${eventName || "-"}</div>
+              <div><strong style="color:#ffffff;">Spot:</strong> ${spotLabel || "-"}</div>
+              <div style="margin-top:10px;">
+                <strong style="color:#ffffff;">Confirmation Code:</strong>
+                <span style="font-weight:bold; letter-spacing:1px;">${confirmationCode || "-"}</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        ${qrCodeUrl ? `
+        <div style="text-align:center; margin:18px 0;">
+          <img src="${qrCodeUrl}" width="240" height="240" style="display:inline-block; border:0;" alt="Reservation QR Code" />
+        </div>
+        ` : ""}
+
+        <p style="margin:0 0 18px;">
+          <a href="${appUrl}/my-spots.html?tab=reservations" style="background:#1f6f5b; color:#ffffff; text-decoration:none;
+            padding:12px 20px; border-radius:10px; font-family:Arial,sans-serif; font-weight:bold; display:inline-block;">
+            View Reservation
+          </a>
+        </p>
+      </td>
+    </tr>
+  `;
+
+  const html = baseEmailLayout({ title, preheader, innerHtml, supportEmail });
+
+  const text = `Hi ${firstName || "there"},
+
+Your reservation is confirmed.
+Venue: ${venueName || "-"}
+Event: ${eventName || "-"}
+Spot: ${spotLabel || "-"}
+Confirmation Code: ${confirmationCode || "-"}
+
+Manage: ${appUrl}/my-spots.html?tab=reservations
+Need help? ${supportEmail}
+`;
+
+  return { subject, html, text };
+}
+
+// ============================
+// 4) PARKING STARTED 
 // ============================
 export function buildParkingStartedEmail({
   firstName,
@@ -383,7 +466,7 @@ Need help? ${supportEmail}
 }
 
 // ============================
-// 4) PARKING RECEIPT / COMPLETED
+// 5) PARKING RECEIPT / COMPLETED
 // ============================
 export function buildParkingReceiptEmail({
   firstName,
@@ -461,7 +544,7 @@ Need help? ${supportEmail}
 }
 
 // ============================
-// 5) PARKING CANCELLED
+// 6) PARKING CANCELLED
 // ============================
 export function buildParkingCancelledEmail({
   firstName,

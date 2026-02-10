@@ -103,6 +103,7 @@
   const urlParams = new URLSearchParams(window.location.search);
   const spot = urlParams.get("spot");
   const event = urlParams.get("event");
+  const flow = urlParams.get("flow");
   const price = urlParams.get("price") || 25; // fallback until DB-driven
 
   // Show the Reservation Summary on the right
@@ -143,6 +144,7 @@
     checkoutUrl.searchParams.set("event", event || "");
     checkoutUrl.searchParams.set("spot", spot || "");
     checkoutUrl.searchParams.set("price", price);
+    if (flow) checkoutUrl.searchParams.set("flow", flow);
 
     // Go to checkout
     window.location.href = checkoutUrl.toString();

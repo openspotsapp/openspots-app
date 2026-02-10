@@ -62,7 +62,7 @@ async function enforcePaymentMethod(user) {
     console.error("Failed to check payment status:", err);
   }
 
-  window.location.href = "add-payment.html";
+  window.location.href = "add-payment.html?flow=reservation";
   return false;
 }
 
@@ -734,12 +734,12 @@ continueBtn.addEventListener("click", async () => {
 
     const baseUrl = user ? "checkout.html" : "details.html";
     window.location.href =
-      `${baseUrl}?event=${selectedEventId}&spot=${selectedSpot.id}&venue=${venueId}`;
+      `${baseUrl}?event=${selectedEventId}&spot=${selectedSpot.id}&venue=${venueId}&flow=reservation`;
     return;
   }
 
   // PRIVATE VENUE FLOW
   const baseUrl = user ? "checkout.html" : "details.html";
   window.location.href =
-    `${baseUrl}?spot=${selectedSpot.id}&venue=${venueId}`;
+    `${baseUrl}?spot=${selectedSpot.id}&venue=${venueId}&flow=reservation`;
 });

@@ -47,6 +47,7 @@
     const eventId = params.get("event");
     const spotId = params.get("spot");
     const venueId = params.get("venue");
+    const flow = params.get("flow");
     const isPrivateVenue = !eventId;
 
     // normalize price
@@ -202,7 +203,8 @@
             eventId: window.selectedEventId,
             spotId: window.selectedSpotId,
             price: window.selectedPrice,   // ✅ send the normalized price
-            userId: window.currentUserId   // ✅ never null now (auth uid or guest_ uuid)
+            userId: window.currentUserId,  // ✅ never null now (auth uid or guest_ uuid)
+            flow: flow || null
           })
         });
 

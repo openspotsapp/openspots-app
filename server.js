@@ -7,7 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { getSpotStatus } from "./backend/spotStatus.js";
 import { amqpEvents, liveSpotCache } from "./backend/amqpClient.js";
-import { sendEmail, buildWelcomeEmail, buildPaymentMethodAddedEmail, buildParkingStartedEmail, buildParkingReceiptEmail, buildParkingCancelledEmail } from "./backend/email.js";
+import { sendEmail, buildWelcomeEmail, buildPaymentMethodAddedEmail, buildReservationConfirmationEmail, buildParkingStartedEmail, buildParkingReceiptEmail, buildParkingCancelledEmail } from "./backend/email.js";
 import Stripe from "stripe";
 
 const require = createRequire(import.meta.url);
@@ -263,6 +263,7 @@ app.post(
 
         const spotRef = db.collection("spots").doc(spotId);
         const reservationRef = db.collection("reservations").doc();
+        let reservationEmailData = null;
 
         await db.runTransaction(async (tx) => {
           // 1️⃣ READS (MUST COME FIRST)
@@ -287,6 +288,11 @@ app.post(
           const venueName = venueSnap?.data()?.name || "Venue";
           const eventName = eventData?.event_name || "Event";
           const spotLabel = spotData.spot_id || "SPOT";
+          const reservationId = reservationRef.id;
+          const appUrl = process.env.BASE_URL || "https://openspots.app";
+          const checkinUrl = `${appUrl}/checkin.html?reservationId=${reservationId}`;
+          const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(checkinUrl)}`;
+          const confirmationCode = reservationId.slice(-6).toUpperCase();
 
           // Build reservation payload with display cache fields
           const reservationData = {
@@ -319,9 +325,48 @@ app.post(
           });
 
           tx.set(reservationRef, reservationData);
+
+          reservationEmailData = {
+            venueName,
+            eventName,
+            spotLabel,
+            qrCodeUrl,
+            confirmationCode
+          };
         });
 
         console.log("✅ Reservation created & spot locked");
+        if (reservationEmailData) {
+          try {
+            const userSnap = await db.collection("users").doc(userId).get();
+            const user = userSnap.exists ? userSnap.data() : {};
+            const toEmail =
+              user?.email ||
+              session.customer_details?.email ||
+              session.customer_email;
+
+            if (toEmail) {
+              const email = buildReservationConfirmationEmail({
+                to: toEmail,
+                firstName: resolveUserFirstName(user),
+                venueName: reservationEmailData.venueName,
+                eventName: reservationEmailData.eventName,
+                spotLabel: reservationEmailData.spotLabel,
+                qrCodeUrl: reservationEmailData.qrCodeUrl,
+                confirmationCode: reservationEmailData.confirmationCode,
+                appUrl: process.env.BASE_URL || "https://openspots.app",
+                supportEmail: "support@openspots.app"
+              });
+
+              await sendEmail({ to: toEmail, subject: email.subject, html: email.html, text: email.text });
+              console.log("✅ Reservation confirmation email sent:", toEmail);
+            } else {
+              console.log("⚠️ No email found for user; skipping reservation confirmation email");
+            }
+          } catch (e) {
+            console.error("Reservation confirmation email failed:", e);
+          }
+        }
         break;
       }
       default:
@@ -369,6 +414,7 @@ app.get("/test-welcome-email", async (req, res) => {
 app.get("/stripe/success", async (req, res) => {
   try {
     const sessionId = req.query.session_id;
+    const flow = req.query.flow;
     if (!sessionId) return res.status(400).send("Missing session ID");
 
     const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -378,6 +424,10 @@ app.get("/stripe/success", async (req, res) => {
     }
 
     // TODO (next step): save reservation using session.metadata
+
+    if (flow === "reservation") {
+      return res.redirect(`${process.env.BASE_URL}/my-spots.html?tab=reservations`);
+    }
 
     res.redirect(`${process.env.BASE_URL}/my-spots.html`);
   } catch (err) {
@@ -701,7 +751,7 @@ app.post("/api/lock-metered-spot", async (req, res) => {
 // Create Stripe Checkout session
 app.post("/create-checkout-session", async (req, res) => {
     try {
-        const { eventId, spotId, price, userId } = req.body;
+        const { eventId, spotId, price, userId, flow } = req.body;
 
         if (!spotId || !price) {
             return res.status(400).json({ error: "Missing required data" });
@@ -727,8 +777,11 @@ app.post("/create-checkout-session", async (req, res) => {
                 userId: userId,
                 spotId: spotId,
                 eventId: eventId,
+                flow: flow || "",
             },
-            success_url: `${process.env.BASE_URL}/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${process.env.BASE_URL}/stripe/success?session_id={CHECKOUT_SESSION_ID}${
+                flow ? `&flow=${encodeURIComponent(flow)}` : ""
+            }`,
             cancel_url: `${process.env.BASE_URL}/checkout.html?cancelled=true`,
         });
 
@@ -742,7 +795,7 @@ app.post("/create-checkout-session", async (req, res) => {
 // Create Stripe Setup session
 app.post("/create-setup-session", async (req, res) => {
     try {
-        const { uid, email, spot } = req.body;
+        const { uid, email, spot, flow } = req.body;
 
         if (!uid || !email) {
             return res.status(400).json({ error: "Missing uid or email" });
@@ -771,8 +824,12 @@ app.post("/create-setup-session", async (req, res) => {
 
         // 2. Create Stripe Checkout session in SETUP mode
         const successUrl = spot
-            ? `${process.env.BASE_URL}/payment-success.html?spot=${encodeURIComponent(spot)}`
-            : `${process.env.BASE_URL}/payment-success.html`;
+            ? `${process.env.BASE_URL}/payment-success.html?spot=${encodeURIComponent(spot)}${
+                flow ? `&flow=${encodeURIComponent(flow)}` : ""
+              }`
+            : `${process.env.BASE_URL}/payment-success.html${
+                flow ? `?flow=${encodeURIComponent(flow)}` : ""
+              }`;
         const cancelUrl = spot
             ? `${process.env.BASE_URL}/add-payment.html?spot=${encodeURIComponent(spot)}`
             : `${process.env.BASE_URL}/add-payment.html`;

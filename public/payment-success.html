@@ -27,8 +27,11 @@
   <script>
     setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
+      const flow = params.get("flow");
       const spot = params.get("spot");
-      if (spot) {
+      if (flow === "reservation") {
+        window.location.href = "./my-spots.html?tab=reservations";
+      } else if (spot) {
         // Parking intent (QR / spot-entry)
         window.location.href = `./confirm-spot.html?spot=${encodeURIComponent(spot)}`;
       } else {
