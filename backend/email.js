@@ -363,7 +363,7 @@ export function buildReservationConfirmationEmail({
         </div>
         ` : ""}
 
-        <p style="margin:0 0 18px;">
+        <p style="margin:0 0 18px; text-align:center;">
           <a href="${appUrl}/my-spots.html?tab=reservations" style="background:#1f6f5b; color:#ffffff; text-decoration:none;
             padding:12px 20px; border-radius:10px; font-family:Arial,sans-serif; font-weight:bold; display:inline-block;">
             View Reservation
