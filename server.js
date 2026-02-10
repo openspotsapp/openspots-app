@@ -7,6 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { getSpotStatus } from "./backend/spotStatus.js";
 import { amqpEvents, liveSpotCache } from "./backend/amqpClient.js";
+import { sendEmail, buildWelcomeEmail, buildPaymentMethodAddedEmail, buildParkingStartedEmail, buildParkingReceiptEmail, buildParkingCancelledEmail } from "./backend/email.js";
 import Stripe from "stripe";
 
 const require = createRequire(import.meta.url);
@@ -35,6 +36,14 @@ app.use(cors({
   allowedHeaders: ["Content-Type"]
 }));
 const PORT = process.env.PORT || 5500;
+const SOCIALS = [
+  { href: "mailto:support@openspots.app", img: "https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/bn5b41rovg31/badge_email.png", alt: "Email" },
+  { href: "https://facebook.com/OpenSpotsApp", img: "https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/yp5p4pvic5zc/badge_facebok.png", alt: "Facebook" },
+  { href: "https://instagram.com/openspotsapp", img: "https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/rtu0rbbejb8p/badge_instagram.png", alt: "Instagram" },
+  { href: "https://twitter.com/openspotsapp", img: "https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/d6ltpc9lh02v/badge_X.png", alt: "X" },
+  { href: "https://tiktok.com/@openspots", img: "https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/8ivm5hp3yq17/badge_tiktok.png", alt: "TikTok" },
+  { href: "https://youtube.com/@openspotsapp", img: "https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/open-spots-app-977ima/assets/m1160f9479nf/badge_youtube.png", alt: "YouTube" },
+];
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const ACTIVE_SESSION_INTERVAL = 60 * 1000; // 1 min
 const PENDING_SESSION_INTERVAL = 1000; // 1 sec
@@ -204,6 +213,32 @@ app.post(
           }, { merge: true });
 
           console.log("✅ Payment method saved for user:", userId);
+          // Send "payment method added" email
+          try {
+            const userSnap = await db.collection("users").doc(userId).get();
+            const user = userSnap.exists ? userSnap.data() : {};
+            const toEmail = user?.email || customer?.email; // fallback to Stripe customer email
+
+            if (toEmail) {
+              const email = buildPaymentMethodAddedEmail({
+                firstName: user?.firstName || user?.displayName || "",
+                appUrl: process.env.BASE_URL || "https://openspots.app",
+                supportEmail: "support@openspots.app",
+                cardBrand: card.brand || null,
+                last4: card.last4 || null,
+                expMonth: card.exp_month || null,
+                expYear: card.exp_year || null,
+                socials: SOCIALS
+              });
+
+              await sendEmail({ to: toEmail, subject: email.subject, html: email.html, text: email.text });
+              console.log("✅ Payment method email sent:", toEmail);
+            } else {
+              console.log("⚠️ No email found for user; skipping payment method email");
+            }
+          } catch (e) {
+            console.error("Payment method email failed:", e);
+          }
           break;
         }
 
@@ -300,6 +335,28 @@ app.get("/health", (req, res) => {
 // Keep-alive ping endpoint (Render)
 app.get("/ping", (req, res) => {
   res.status(200).send("pong");
+});
+
+app.get("/test-welcome-email", async (req, res) => {
+  try {
+    const email = buildWelcomeEmail({
+      firstName: "Nemesio",
+      appUrl: "https://openspots.app",
+      supportEmail: "support@openspots.app",
+    });
+
+    await sendEmail({
+      to: "openspotsapp@gmail.com",
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+    });
+
+    res.send("Welcome email sent");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Welcome email failed");
+  }
 });
 
 // Stripe success finalizer
@@ -418,6 +475,42 @@ app.post("/api/parking/create-pending", async (req, res) => {
     }
 });
 
+app.post("/api/send-welcome-email", async (req, res) => {
+    try {
+        const { uid } = req.body;
+        if (!uid) return res.status(400).json({ error: "Missing uid" });
+
+        const userSnap = await db.collection("users").doc(uid).get();
+        if (!userSnap.exists) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const user = userSnap.data();
+        if (!user.email) {
+            return res.status(400).json({ error: "User has no email" });
+        }
+
+        const email = buildWelcomeEmail({
+            firstName: user.firstName || user.displayName || "",
+            appUrl: process.env.BASE_URL || "https://openspots.app",
+            supportEmail: "support@openspots.app"
+        });
+
+        await sendEmail({
+            to: user.email,
+            subject: email.subject,
+            html: email.html,
+            text: email.text
+        });
+
+        console.log("✅ Welcome email sent to:", user.email);
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Welcome email error:", err);
+        res.status(500).json({ error: "Failed to send welcome email" });
+    }
+});
+
 app.post("/api/parking/confirm-session", async (req, res) => {
     try {
         const { sessionId } = req.body;
@@ -473,6 +566,31 @@ app.post("/api/parking/confirm-session", async (req, res) => {
             });
         }
 
+        // Send "parking started" email
+        try {
+            const userRef = data.user_id; // users/<uid> doc ref
+            const userSnap = userRef ? await userRef.get() : null;
+            const user = userSnap?.exists ? userSnap.data() : {};
+            const toEmail = user?.email;
+
+            if (toEmail) {
+                const email = buildParkingStartedEmail({
+                    firstName: user?.firstName || user?.displayName || "",
+                    supportEmail: "support@openspots.app",
+                    appUrl: process.env.BASE_URL || "https://openspots.app",
+                    zoneNumber: data.zone_number,
+                    startedAt: "Just now",
+                    ratePerHour: zoneData?.rate_per_hour,
+                    socials: SOCIALS
+                });
+
+                await sendEmail({ to: toEmail, subject: email.subject, html: email.html, text: email.text });
+                console.log("✅ Parking started email sent:", toEmail);
+            }
+        } catch (e) {
+            console.error("Parking started email failed:", e);
+        }
+
         return res.json({ success: true });
     } catch (err) {
         console.error("Failed to confirm parking session:", err);
@@ -492,6 +610,37 @@ app.post("/end-metered-session", async (req, res) => {
             status: "COMPLETED",
             ended_at: admin.firestore.FieldValue.serverTimestamp()
         });
+
+        // Send receipt email
+        try {
+            const sessionSnap = await db.collection("parking_sessions").doc(session_id).get();
+            const s = sessionSnap.exists ? sessionSnap.data() : null;
+
+            if (s?.user_id) {
+                const userSnap = await s.user_id.get();
+                const user = userSnap.exists ? userSnap.data() : {};
+                const toEmail = user?.email;
+
+                if (toEmail) {
+                    const email = buildParkingReceiptEmail({
+                        firstName: user?.firstName || user?.displayName || "",
+                        supportEmail: "support@openspots.app",
+                        appUrl: process.env.BASE_URL || "https://openspots.app",
+                        zoneNumber: s.zone_number,
+                        startTime: s.arrival_time?.toDate?.().toLocaleString?.() || "",
+                        endTime: new Date().toLocaleString(),
+                        totalMinutes: s.total_minutes,
+                        totalAmount: s.price_charged,
+                        socials: SOCIALS
+                    });
+
+                    await sendEmail({ to: toEmail, subject: email.subject, html: email.html, text: email.text });
+                    console.log("✅ Receipt email sent:", toEmail);
+                }
+            }
+        } catch (e) {
+            console.error("Receipt email failed:", e);
+        }
 
         const zoneRef = db.doc(zone_id);
 
