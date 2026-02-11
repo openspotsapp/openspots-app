@@ -1,25 +1,22 @@
 {
-  "name": "open-spots",
-  "type": "module",
+  "name": "openspots-app",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
+  "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "amqplib": "^0.10.9",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "firebase-admin": "^13.6.0",
-    "mqtt": "^5.14.1",
-    "node-fetch": "^3.3.2",
-    "resend": "^6.9.1",
-    "stripe": "^20.1.0"
-  }
+    "expo": "~54.0.33",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-native": "0.81.5"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "typescript": "~5.9.2"
+  },
+  "private": true
 }
