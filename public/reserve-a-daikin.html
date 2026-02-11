@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Daikin Premium Parking Reservation</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="logo-row">
+      <img src="assets/Daikin_Stadium_Logo.png" alt="Daikin Stadium Logo" class="daikin-logo" />
+      <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="center-logo" />
+      <img src="assets/ASTROS LOGO.png" alt="Houston Astros Logo" />
+    </div>
+
+    <h1>Reserve Your Premium Parking at Daikin Stadium</h1>
+    <div id="event-display" class="event-display">Loading event details...</div>
+
+    <div class="map-section">
+      <h2>Select Your Parking Spot</h2>
+      <p>Tap a green pin below to reserve your spot.</p>
+      <div class="daikin-map-wrapper venue-map-wrapper">
+      <div id="map"></div>
+      </div>
+      <div id="legend">
+        <span>🟢 Available  🔴 Reserved</span>
+      </div>
+      <div id="selectedSpot" class="selected-spot-display">No spot selected</div>
+      <button id="reserveBtn" disabled>Reserve Parking & Continue</button>
+    </div>
+
+    <p class="disclaimer">Limited to 30 spots per event. Reserve now to guarantee your space.</p>
+  </div>
+
+  <script>
+    const eventName = new URLSearchParams(window.location.search).get("event") || "Daikin Stadium Event - Date TBD";
+    document.getElementById("event-display").innerText = eventName;
+
+    const selectedSpotDisplay = document.getElementById("selectedSpot");
+    const reserveBtn = document.getElementById("reserveBtn");
+    let selectedSpot = null;
+    let activeInfo = null;
+
+    const reservedSpots = ["A5", "A7", "A11", "A18", "A25", "A30"];
+    const spots = [
+      { id: "A1", lat: 29.7556828646851, lng: -95.35434965180475 },
+      { id: "A2", lat: 29.755702838088794, lng: -95.35433088604584 },
+      { id: "A3", lat: 29.755723743474658, lng: -95.35431885327445 },
+      { id: "A4", lat: 29.75574557968375, lng: -95.3543054327912 },
+      { id: "A5", lat: 29.755761397279137, lng: -95.35428117632596 },
+      { id: "A6", lat: 29.755784921118718, lng: -95.35427183568068 },
+      { id: "A7", lat: 29.755801697811076, lng: -95.35425300397213 },
+      { id: "A8", lat: 29.755825616856086, lng: -95.35423947032125 },
+      { id: "A9", lat: 29.755842572303628, lng: -95.35421972532632 },
+      { id: "A10", lat: 29.755866202491916, lng: -95.35420567915541 },
+      { id: "A11", lat: 29.75588911148603, lng: -95.35418887405856 },
+      { id: "A12", lat: 29.755907376558785, lng: -95.35417104811087 },
+      { id: "A13", lat: 29.755925842036323, lng: -95.35415366993328 },
+      { id: "A14", lat: 29.755947166176966, lng: -95.35413684761888 },
+      { id: "A15", lat: 29.756063292690417, lng: -95.35404486076854 },
+      { id: "A16", lat: 29.756082406637294, lng: -95.35403593171013 },
+      { id: "A17", lat: 29.756102732526557, lng: -95.35401422167998 },
+      { id: "A18", lat: 29.756120476623792, lng: -95.35400560743855 },
+      { id: "A19", lat: 29.75613951540381, lng: -95.35398160433152 },
+      { id: "A20", lat: 29.756159938657756, lng: -95.35397474664015 },
+      { id: "A21", lat: 29.756177607596694, lng: -95.35395391626078 },
+      { id: "A22", lat: 29.756198635492908, lng: -95.35394377336816 },
+      { id: "A23", lat: 29.75621684122496, lng: -95.35392982281222 },
+      { id: "A24", lat: 29.756234905952315, lng: -95.35391238414321 },
+      { id: "A25", lat: 29.756256453250145, lng: -95.35390242746976 },
+      { id: "A26", lat: 29.756272121313014, lng: -95.3538845407441 },
+      { id: "A27", lat: 29.756291858141715, lng: -95.35387020940466 },
+      { id: "A28", lat: 29.756312764844534, lng: -95.35385517697908 },
+      { id: "A29", lat: 29.756330054827576, lng: -95.35383920990944 },
+      { id: "A30", lat: 29.75635031934495, lng: -95.35382726623183 },
+      { id: "A31", lat: 29.756369537895015, lng: -95.35381250619588 }
+    ];
+
+    function distanceMiles(aLat,aLng,bLat,bLng){
+      const R=3958.8;
+      const dLat=(bLat-aLat)*Math.PI/180;
+      const dLon=(bLng-aLng)*Math.PI/180;
+      const a=Math.sin(dLat/2)**2+
+              Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*
+              Math.sin(dLon/2)**2;
+      return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    }
+    function niceMiles(mi){return mi>=10?mi.toFixed(1):mi>=1?mi.toFixed(2):Math.max(0.01,mi).toFixed(2);}
+
+    function initMap(){
+      navigator.geolocation.getCurrentPosition(
+        pos=>renderMap({lat:pos.coords.latitude,lng:pos.coords.longitude}),
+        ()=>renderMap({lat:29.7559,lng:-95.3541})
+      );
+    }
+
+    function renderMap(userPos){
+      const map=new google.maps.Map(document.getElementById("map"),{
+        zoom:18,center:{lat:29.7559,lng:-95.3541},mapTypeId:"satellite",
+        mapTypeControl:true,streetViewControl:false,fullscreenControl:true
+      });
+
+      const userMarker=new google.maps.Marker({
+        position:userPos,map,
+        icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:"#007bff",fillOpacity:0.9,strokeColor:"#fff",strokeWeight:2,scale:8}
+      });
+
+      const pulse=new google.maps.Circle({
+        map,center:userPos,radius:0,strokeOpacity:0,fillColor:"#3b82f6",fillOpacity:0.35,clickable:false
+      });
+      let r=0,growing=true;
+      setInterval(()=>{r=growing?r+6:0;pulse.setRadius(r);if(r>=120)growing=false;if(!growing&&r===0)growing=true;},60);
+
+      spots.forEach(spot=>{
+        const isReserved=reservedSpots.includes(spot.id);
+        const dist=distanceMiles(userPos.lat,userPos.lng,spot.lat,spot.lng);
+        const marker=new google.maps.Marker({
+          position:{lat:spot.lat,lng:spot.lng},map,
+          icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:isReserved?"#d83b3b":"#32CD32",fillOpacity:1,strokeColor:"#fff",strokeWeight:2,scale:7}
+        });
+
+        const info=isReserved
+          ? new google.maps.InfoWindow({content:`<div style='text-align:center;font-family:Montserrat;font-weight:600;'>Spot ${spot.id}<br><span style='color:#d83b3b;'>Reserved</span></div>`})
+          : new google.maps.InfoWindow({content:`<div style='text-align:center;font-family:Montserrat;'><strong>Spot ${spot.id}</strong><br>Available<br>${niceMiles(dist)} mi away<br><br><button style='background:#2f6c5b;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:600;' onclick="selectSpot('${spot.id}')">Reserve</button></div>`});
+
+        marker.addListener("click",()=>{if(activeInfo)activeInfo.close();info.open(map,marker);activeInfo=info;});
+      });
+
+      window.selectSpot=function(id){
+        selectedSpot=id;
+        selectedSpotDisplay.textContent=`You have selected spot ${id}`;
+        reserveBtn.disabled=false;
+        reserveBtn.classList.add("active");
+      };
+
+      reserveBtn.addEventListener("click",()=>{
+        if(!selectedSpot)return;
+        window.location.href=`details.html?spot=${selectedSpot}&event=${encodeURIComponent(eventName)}`;
+      });
+    }
+  </script>
+
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnNTs3_DlvbUa4bNcZktr_gxdAj_AIZNs&callback=initMap"></script>
+</body>
+</html>

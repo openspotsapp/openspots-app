@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Find Open Spots Nearby | OpenSpots</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+<link rel="stylesheet" href="style.css" />
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnNTs3_DlvbUa4bNcZktr_gxdAj_AIZNs&callback=initMap"></script>
+</head>
+<body>
+
+<script type="module">
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+  import { app } from "./firebase-init.js";
+
+  let isLoggedIn = false;
+  window.isLoggedIn = isLoggedIn;
+
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, (user) => {
+    isLoggedIn = !!user;
+    window.isLoggedIn = isLoggedIn;
+  });
+</script>
+
+<header class="details-header">
+  <button class="back-btn" onclick="window.history.back()">← Back</button>
+  <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="details-logo" />
+</header>
+
+<section class="info-bar">
+  <h2 id="infoText">Loading Open Street Spots...</h2>
+</section>
+
+<section class="map-section">
+  <div class="free-map-wrapper">
+    <div id="map"></div>
+  </div>
+  <p class="map-caption">
+    <img src="assets/Facebook Profile Picture.png" style="width:22px; vertical-align:middle; margin-right:4px; margin-top: .01px;"> Available
+    &nbsp;&nbsp;&nbsp;
+    <img src="assets/RED MARKER ICON.png" style="width:25px; vertical-align:middle; margin-right:4px; margin-top: .01px;"> Occupied
+  </p>
+</section>
+
+<footer>
+  <div class="footer-container">
+    <div class="footer-brand">
+      <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="footer-logo">
+      <p><strong>OpenSpots</strong> | Smarter Parking with Sensors</p>
+      <p>Powered by AI & IoT • Est. 2025</p>
+    </div>
+    <div class="footer-social">
+      <h4>Follow Us</h4>
+      <div class="social-icons">
+        <a href="https://instagram.com/openspotsapp" target="_blank"><img src="assets/badge instagram.png" alt="Instagram" /></a>
+        <a href="https://twitter.com/openspotsapp" target="_blank"><img src="assets/badge X.png" alt="Twitter/X" /></a>
+        <a href="https://tiktok.com/@openspotsapp" target="_blank"><img src="assets/badge tiktok.png" alt="TikTok" /></a>
+        <a href="https://youtube.com/@openspotsapp" target="_blank"><img src="assets/badge youtube.png" alt="YouTube" /></a>
+        <a href="mailto:contact@openspots.app"><img src="assets/badge email.png" alt="Email" /></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© OpenSpots 2025. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<div id="authModal" class="auth-modal hidden">
+  <div class="auth-modal-content">
+    <h3>Sign up to continue</h3>
+    <p>
+      Create a free OpenSpots account to get directions, view spot details,
+      and reserve verified parking.
+    </p>
+
+    <div class="auth-actions">
+      <a href="login.html" class="btn-primary">Log In</a>
+      <a href="signup.html" class="btn-secondary">Create Account</a>
+    </div>
+
+    <button class="close-modal" onclick="closeAuthModal()">Not now</button>
+  </div>
+</div>
+
+<script>
+// ---------- Smart “Take Me Here” ----------
+function openDirections(lat, lng) {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const url = isMobile
+    ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`
+    : `https://maps.google.com/?daddr=${lat},${lng}&travelmode=driving`;
+  window.open(url, "_blank");
+}
+
+function guardedDirections(lat, lng) {
+  if (!window.isLoggedIn) {
+    openAuthModal();
+    return;
+  }
+  openDirections(lat, lng);
+}
+
+function openAuthModal() {
+  document.getElementById("authModal").classList.remove("hidden");
+}
+
+function closeAuthModal() {
+  document.getElementById("authModal").classList.add("hidden");
+}
+
+// ---------- Sensors ----------
+const sensors = [
+  { id:"S01", lat:29.76226054832702, lng:-95.36212280432228, status:"open" },
+  { id:"S02", lat:29.76230475180377, lng:-95.36209556865639, status:"open" },
+  { id:"S03", lat:29.762352247496768, lng:-95.36205844992847, status:"open" },
+  { id:"S04", lat:29.762410564762465, lng:-95.36200593576743, status:"occupied", duration:"18 min" },
+  { id:"S05", lat:29.762473726819167, lng:-95.3619570576147, status:"open" },
+  { id:"S06", lat:29.76252746627378, lng:-95.36190880180405, status:"occupied", duration:"42 min" },
+  { id:"S07", lat:29.762577818558047, lng:-95.36186929811336, status:"open" },
+  { id:"S08", lat:29.762622766267004, lng:-95.36184461128676, status:"open" },
+  { id:"S09", lat:29.762887310283162, lng:-95.36192038182799, status:"open" },
+  { id:"S10", lat:29.762908316015324, lng:-95.36196682790262, status:"open" },
+  { id:"S11", lat:29.762940532305382, lng:-95.36202062066634, status:"open" },
+  { id:"S12", lat:29.762967178806313, lng:-95.36206063666444, status:"open" },
+  { id:"S13", lat:29.76299752714372, lng:-95.36211101340372, status:"occupied", duration:"33 min" },
+  { id:"S14", lat:29.76304015029939, lng:-95.36218654393495, status:"occupied", duration:"3 min" },
+  { id:"S15", lat:29.763064037821447, lng:-95.3622223537026, status:"open" },
+  { id:"S16", lat:29.763093612445807, lng:-95.36227637719348, status:"open" },
+  { id:"S17", lat:29.76312476328195, lng:-95.36232597172933, status:"open" },
+  { id:"S18", lat:29.763068088689707, lng:-95.36258403358214, status:"occupied", duration:"54 min" },
+  { id:"S19", lat:29.76301752939993, lng:-95.36262563120994, status:"occupied", duration:"24 min" },
+  { id:"S20", lat:29.762955488106922, lng:-95.36267310880152, status:"open" },
+  { id:"S21", lat:29.762904741170395, lng:-95.36271456046416, status:"open" },
+  { id:"S22", lat:29.762865138603185, lng:-95.36275983157934, status:"open" },
+  { id:"S23", lat:29.762807237686737, lng:-95.36278765000267, status:"occupied", duration:"11 min" },
+  { id:"S24", lat:29.76276570883219, lng:-95.36282453367559, status:"occupied", duration:"22 min" },
+  { id:"S25", lat:29.762724934781865, lng:-95.3628574035797, status:"open" },
+  { id:"S26", lat:29.762474733129782, lng:-95.36284649957551, status:"open" },
+  { id:"S27", lat:29.762450982548334, lng:-95.36280331506943, status:"open" },
+  { id:"S28", lat:29.762429642068785, lng:-95.36277173986521, status:"open" },
+  { id:"S29", lat:29.762413875587047, lng:-95.36274594729818, status:"open" },
+  { id:"S30", lat:29.76239451131272, lng:-95.36271148956351, status:"open" },
+  { id:"S31", lat:29.762361622935014, lng:-95.36265793216539, status:"occupied", duration:"1 min" },
+  { id:"S32", lat:29.762334428947266, lng:-95.36261242266573, status:"occupied", duration:"9 min" },
+  { id:"S33", lat:29.7622994125385, lng:-95.36255302573032, status:"open" },
+  { id:"S34", lat:29.762280959060643, lng:-95.36252258062797, status:"open" },
+  { id:"S35", lat:29.76224131660227, lng:-95.36245710592168, status:"open" },
+  { id:"S36", lat:29.76221832256876, lng:-95.3624245575995, status:"open" }
+];
+
+// ---------- Utils ----------
+function distanceMiles(aLat,aLng,bLat,bLng){
+  const R=3958.8;
+  const dLat=(bLat-aLat)*Math.PI/180;
+  const dLon=(bLng-aLng)*Math.PI/180;
+  const aa=Math.sin(dLat/2)**2+
+            Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*
+            Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa));
+}
+function niceMiles(mi){return mi>=10?mi.toFixed(1):mi>=1?mi.toFixed(2):Math.max(0.01,mi).toFixed(2);}
+
+function centerChoice(userLat,userLng){
+  const nearest=sensors.reduce((p,c)=>distanceMiles(userLat,userLng,c.lat,c.lng)<distanceMiles(userLat,userLng,p.lat,p.lng)?c:p);
+  const dist=distanceMiles(userLat,userLng,nearest.lat,nearest.lng);
+  if(dist>10){
+    alert("You’re outside the OpenSpots coverage area. Showing Downtown Houston sensors.");
+    return {lat:29.76295,lng:-95.36225,zoom:17,isFallback:true};
+  }
+  return {lat:userLat,lng:userLng,zoom:15,isFallback:false};
+}
+
+// ---------- Pulse ----------
+function startPulse(map,position){
+  const pulse=new google.maps.Circle({
+    map,center:position,radius:0,strokeOpacity:0,fillColor:"#3b82f6",fillOpacity:0.35,clickable:false
+  });
+  let r=0,growing=true;
+  setInterval(()=>{r=growing?r+6:0;pulse.setRadius(r);
+    if(r>=120)growing=false;
+    if(!growing&&r===0)growing=true;
+  },60);
+  return pulse;
+}
+
+// ---------- Init Map ----------
+function initMap(userLat,userLng,radius){
+  const center=centerChoice(userLat,userLng);
+  const map=new google.maps.Map(document.getElementById("map"),{
+    center:{lat:center.lat,lng:center.lng},zoom:center.zoom,mapTypeControl:true,
+    streetViewControl:false,fullscreenControl:false
+  });
+
+  const userMarker=new google.maps.Marker({
+    position:{lat:userLat,lng:userLng},map,title:"You are here",
+    icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:"#007bff",fillOpacity:0.9,
+          strokeColor:"#fff",strokeWeight:2,scale:8}
+  });
+  const pulse=startPulse(map,{lat:userLat,lng:userLng});
+
+  // 📍 Locate button
+  const locationButton=document.createElement("button");
+  locationButton.textContent="📍";
+  locationButton.classList.add("locate-btn");
+  map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(locationButton);
+  locationButton.addEventListener("click",()=>{
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const newPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
+        map.setCenter(newPos);
+        userMarker.setPosition(newPos);
+        pulse.setCenter(newPos);
+        userMarker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(()=>userMarker.setAnimation(null),1200);
+      });
+    }else alert("Geolocation not supported by your browser.");
+  });
+
+  // --- Spots ---
+  let openCount=0;let activeInfo=null;
+  sensors.forEach(s=>{
+    const distFromUser=distanceMiles(userLat,userLng,s.lat,s.lng);
+    const distFromCenter=distanceMiles(center.lat,center.lng,s.lat,s.lng);
+    if(distFromCenter<=radius){
+      const icon={
+        url:s.status==="open"
+          ?"assets/Facebook Profile Picture.png"
+          :"assets/RED MARKER ICON.png",
+        scaledSize:new google.maps.Size(20,20),
+        anchor:new google.maps.Point(16,16)
+      };
+      const marker=new google.maps.Marker({position:{lat:s.lat,lng:s.lng},map,icon});
+      const distanceText=`${niceMiles(distFromUser)} mi away`;
+      const msg=s.status==="open"
+        ? `<div style="text-align:center;">
+             <strong>Spot ${s.id} is OPEN</strong><br>(${distanceText})<br><br>
+             <button class="take-me-btn" onclick="guardedDirections(${s.lat},${s.lng})">
+               Take Me Here
+             </button>
+           </div>`
+        : `<div style="text-align:center;">
+             <button class="busy-btn">Busy</button>
+             <strong>Spot ${s.id} is OCCUPIED</strong><br>for ${s.duration||"N/A"}
+           </div>`;
+      const info=new google.maps.InfoWindow({content:msg});
+      marker.addListener("click",()=>{
+        if(!window.isLoggedIn){
+          openAuthModal();
+          return;
+        }
+        if(activeInfo)activeInfo.close();
+        info.open(map,marker);
+        activeInfo=info;
+      });
+      if(s.status==="open")openCount++;
+    }
+  });
+
+  const infoText=document.getElementById("infoText");
+  infoText.textContent=center.isFallback
+    ?`Displaying ${openCount} Open Street Spots`
+    :openCount>0
+      ?`Displaying ${openCount} Open Street Spots within ${radius} miles of your location`
+      :`Displaying 0 Open Street Spots`;
+}
+
+// --- MAIN ---
+const params=new URLSearchParams(location.search);
+const radius=parseFloat(params.get("radius"))||3;
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(
+    pos=>initMap(pos.coords.latitude,pos.coords.longitude,radius),
+    ()=>initMap(29.76295,-95.36225,radius)
+  );
+}else initMap(29.76295,-95.36225,radius);
+</script>
+
+</body>
+</html>

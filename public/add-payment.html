@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>Add Payment Method | OpenSpots</title>
+
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="add-payment.css" />
+
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<body class="page-bg">
+  <main class="add-payment-container">
+    <section class="add-payment-card">
+      <h2 class="add-payment-title">Add a card for faster checkout</h2>
+      <p class="add-payment-subtitle">
+        Save a payment method to make reservations quicker and easier.
+      </p>
+
+      <div class="add-payment-row">
+        <div class="add-payment-label">Signed in as</div>
+        <div class="add-payment-value" id="userEmail">Loading...</div>
+      </div>
+
+      <ul class="add-payment-list">
+        <li>Secure card storage by Stripe</li>
+        <li>Use your card across all OpenSpots locations</li>
+        <li>Update or remove cards anytime</li>
+      </ul>
+
+      <button class="add-payment-btn" id="addPaymentBtn">
+        Add Card with Stripe
+      </button>
+
+      <div class="add-payment-status" id="paymentStatus"></div>
+
+      <p class="add-payment-note">
+        You will be redirected to Stripe to enter your card details.
+      </p>
+    </section>
+  </main>
+
+  <script src="load-components.js"></script>
+  <script type="module" src="add-payment.js"></script>
+</body>
+</html>

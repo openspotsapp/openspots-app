@@ -1,0 +1,71 @@
+:root {
+  --white: #ffffff;
+  --green-dark: #1f6351;
+  --green-main: #358c74;
+  --green-accent: #48d9b0;
+  --mint: #80ffdb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--green-main), var(--green-dark));
+  color: var(--white);
+  font-family: "Montserrat", sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.status-pill {
+  display: inline-block;
+  background: var(--green-accent);
+  color: var(--green-dark);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.row span {
+  opacity: 0.8;
+}
+
+.row strong {
+  font-weight: 600;
+}
+
+.subtext {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}

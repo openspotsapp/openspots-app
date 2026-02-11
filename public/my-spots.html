@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>My Spots | OpenSpots</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="myspots.css" />
+</head>
+
+<body>
+
+  <!-- Load global header -->
+  <div id="header"></div>
+  <div data-page-title="MY SPOTS"></div>
+
+  <main class="my-spots-container">
+    <div class="tabs">
+      <button class="tab active" data-tab="active">Active Parking</button>
+      <button class="tab" data-tab="reservations">Reservations</button>
+      <button class="tab" data-tab="past">Past Parking</button>
+    </div>
+
+    <div class="tab-content">
+      <section id="tab-active" class="tab-panel active" data-component="spot-card-parking">
+        <p>No active parking session</p>
+      </section>
+
+      <section id="tab-reservations" class="tab-panel" data-component="spot-card-active">
+        <p id="authError" class="auth-error hidden">
+          You must be logged in to view your reservations.
+        </p>
+        <div id="spotsList" class="spots-list">No upcoming reservations</div>
+      </section>
+
+      <section id="tab-past" class="tab-panel">
+        <p>No past parking sessions</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="firebase-init.js" type="module"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { app } from "./firebase-init.js";
+
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        const authError = document.getElementById("authError");
+        if (authError) {
+          authError.classList.remove("hidden");
+        }
+      }
+    });
+  </script>
+
+  <script src="my-spots.js" type="module"></script>
+  <script src="load-components.js"></script>
+
+   <!-- NAVBAR -->
+  <div id="navbar">
+    <a href="my-spots.html" class="nav-item" data-target="my-spots.html"></a>
+  </div>
+
+</body>
+</html>

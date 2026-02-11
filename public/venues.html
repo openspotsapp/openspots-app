@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Venues | OpenSpots</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="firebase-init.js"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { app } from "./firebase-init.js";
+
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Not logged in → force login
+        window.location.replace("/login.html");
+      }
+    });
+  </script>
+
+  <script type="module" src="venues.js"></script>
+</head>
+
+<body class="page-bg">
+
+    <!-- HEADER (Dynamic title injected by JS) -->
+  <div id="header"></div>
+  <div data-page-title="VENUES"></div>
+
+  <script src="load-components.js"></script>
+
+  <main class="page-container">
+
+  <!-- SEARCH BAR -->
+  <div class="venue-search">
+      <input id="venueSearchInput" type="text" placeholder="Search Venues..." />
+  </div>
+
+  <!-- VENUE LIST CONTAINER -->
+  <div id="venueList" class="venue-list"></div>
+
+  <!-- NAVBAR -->
+  <div id="navbar">
+    <a href="venues.html" class="nav-item" data-target="venues.html"></a>
+  </div>
+  </main>
+</body>
+</html>

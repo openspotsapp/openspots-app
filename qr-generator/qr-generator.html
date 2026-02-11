@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OpenSpots – QR Generator</title>
+  <link rel="stylesheet" href="qr-generator.css" />
+</head>
+<body>
+
+  <div class="app">
+    <h1>OpenSpots QR Generator</h1>
+    <p class="subtitle">Private operator tool</p>
+
+    <div class="controls">
+      <label>
+        Prefix
+        <input id="prefix" value="ROM" />
+      </label>
+
+      <label>
+        Start #
+        <input id="start" type="number" value="1" />
+      </label>
+
+      <label>
+        End #
+        <input id="end" type="number" value="6" />
+      </label>
+
+      <button id="generate">Generate QRs</button>
+      <button id="export">Export PDF</button>
+    </div>
+
+    <div id="qr-container"></div>
+  </div>
+
+  <!-- html2pdf CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="qr-generator.js"></script>
+</body>
+</html>

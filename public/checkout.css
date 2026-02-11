@@ -1,0 +1,110 @@
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #f9fafb;
+  margin: 0;
+  color: #222;
+}
+
+/* HEADER */
+.checkout-header {
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 1rem 0;            /* optional: slightly tighter than 12px */
+}
+
+.header-logo {
+  height: 60px;         
+}
+
+.back-btn {
+  position: absolute;
+  left: 1rem;
+  top: 50%;                   /* center */
+  transform: translateY(-50%);
+  background: none;
+  border: 2px solid #1f6351;
+  color: #1f6351;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  width: auto;
+  transition: all 0.3s ease;
+  z-index: 2;                 /* keep it above the logo */
+}
+
+.back-btn:hover {
+  background: #1f6351;
+  color: #fff;
+}
+
+
+/* CONTAINER */
+.checkout-container {
+  max-width: 600px;
+  margin: 48px auto;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(47,108,91,0.08);
+  padding: 32px 24px;
+}
+
+.checkout-container h1 {
+  text-align: center;
+  color: #2f6c5b;
+  margin-bottom: 24px;
+  font-size: 1.6rem;
+}
+
+.summary-card h2 {
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+  color: #1f4d41;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+  font-size: 0.95rem;
+}
+
+.summary-grid div {
+  border-bottom: 1px dashed #e5e7eb;
+  padding-bottom: 6px;
+}
+
+.btn-primary {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  background: #2f6c5b;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  padding: 14px 0;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.btn-primary:hover { background: #265a4c; }
+.btn-primary:active { transform: translateY(1px); }
+
+.checkout-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #647c74;
+  padding: 32px 0;
+}
+
+@media (max-width: 900px) {
+  .back-btn { left: 1.7rem; }
+}

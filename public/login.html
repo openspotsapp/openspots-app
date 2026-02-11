@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>OpenSpots | Log In</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+
+  <!-- Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<!-- Main Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="login-bg">
+
+  <div class="login-container">
+
+    <!-- Logo -->
+    <img src="assets/Facebook Profile Picture.png" class="login-logo" alt="OpenSpots Logo">
+
+    <!-- Title -->
+    <div class="login-title">OPENSPOTS</div>
+    <div class="login-subtitle">Your Parking Pal</div>
+    <form id="loginForm">
+
+    <div id="error-message" class="login-error"></div>
+
+      <input type="email" id="email" class="login-input" placeholder="Email" />
+
+      <div class="password-field">
+        <input
+          type="password"
+          id="password"
+          class="login-input pass"
+          placeholder="Password"
+        />
+        <i class="fa-regular fa-eye toggle-password"></i>
+      </div>
+
+      <button type="submit" class="login-btn">LOG IN</button>
+
+    </form>
+
+    <!-- Forgot Password -->
+    <a href="forgot-password.html" class="login-forgot">Forgot Password?</a>
+
+    <!-- Sign Up Redirect -->
+    <div class="login-signup">
+      Don’t have an account? <a href="signup.html">Sign Up</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="firebase-init.js" defer></script>
+  <script type="module" src="login.js" defer></script>
+
+
+
+</body>
+</html>

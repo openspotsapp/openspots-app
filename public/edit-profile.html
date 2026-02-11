@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Edit Profile | OpenSpots</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="firebase-init.js"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { app } from "./firebase-init.js";
+
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Not logged in → force login
+        window.location.replace("/login.html");
+      }
+    });
+  </script>
+
+</head>
+
+<body class="page-bg">
+
+  <!-- HEADER -->
+  <div id="header"></div>
+  <div data-page-title="EDIT PROFILE"></div>
+
+  <!-- BACK BUTTON -->
+  <div class="venue-details-header-back">
+    <button class="venue-back-btn" onclick="history.back()">く</button>
+  </div>
+
+  <main class="page-container">
+
+  <!-- CONTENT -->
+  <div class="edit-profile-container">
+
+    <form id="editProfileForm" class="edit-profile-card">
+
+      <h3 class="edit-profile-title">Account Information</h3>
+
+      <label>
+        First Name
+      <input type="text" id="firstName" placeholder="First name" />
+      </label>
+
+      <label>
+        Last Name
+      <input type="text" id="lastName" placeholder="Last name" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" id="email" disabled />
+      </label>
+
+      <label>
+        Phone Number
+        <input type="tel" id="phone" placeholder="XXX-XXX-XXXX" />
+      </label>
+
+      <h3 class="edit-profile-title">Vehicle Info</h3>
+
+      <label>
+        Vehicle Color
+      <input
+        type="text"
+        id="vehicleColor"
+        placeholder="Black"
+        />
+      </label>
+
+      <label>
+        Vehicle Make & Model
+      <input
+        type="text"
+        id="vehicleMakeModel"
+        placeholder="KIA Telluride"
+        />
+      </label>
+
+      <label>
+        License Plate
+      <input
+        type="text"
+        id="vehicleLicense"
+        placeholder="ABC-1234"
+        />
+      </label>
+
+
+      <button type="submit" class="save-profile-btn">
+        Save Changes
+      </button>
+
+    </form>
+
+  </div>
+
+  </main>
+
+  <!-- GLOBAL SCRIPTS -->
+  <script src="load-components.js"></script>
+  <script type="module" src="edit-profile.js"></script>
+
+</body>
+</html>

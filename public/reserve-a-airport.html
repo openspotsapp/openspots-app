@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Airport Premium Parking Reservation</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <!-- Logo Row -->
+    <div class="logo-row">
+      <img src="assets/airport logo.png" alt="World Airport Logo" class="worldairport-logo" />
+      <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="center-logo" />
+      <img src="assets/airplane logo.png" alt="Airplane Logo" />
+    </div>
+
+    <h1>Reserve Your Premium Parking at the Airport</h1>
+
+    <!-- Event Display -->
+    <div id="event-display" class="event-display">Loading event details...</div>
+
+    <!-- Map Section -->
+    <div class="map-section">
+      <h2>Select Your Parking Spot</h2>
+      <p>Tap an available spot below to reserve.</p>
+
+      <div class="parking-grid" id="parkingGrid"></div>
+
+      <div id="selectedSpot" class="selected-spot-display">
+        No spot selected
+      </div>
+
+      <button id="reserveBtn" disabled>Reserve Parking & Continue</button>
+    </div>
+
+    <p class="disclaimer">
+      Limited to 15 spots per event. Reserve now to guarantee your space.
+    </p>
+  </div>
+
+  <script>
+const urlParams = new URLSearchParams(window.location.search);
+const eventName = urlParams.get("event") || "Airport Reservation – Date TBD";
+document.getElementById("event-display").innerText = eventName.replace(/\\n/g, "\n");
+
+const parkingGrid = document.getElementById("parkingGrid");
+const selectedSpotDisplay = document.getElementById("selectedSpot");
+const reserveBtn = document.getElementById("reserveBtn");
+
+const reservedSpots = ["A5", "A7", "A11"];
+let selectedSpot = null;
+
+// ======== BUILD GRID ========
+for (let i = 1; i <= 15; i++) {
+  const spot = document.createElement("div");
+  spot.classList.add("spot");
+  const spotId = "A" + i;
+  spot.textContent = spotId;
+
+  if (reservedSpots.includes(spotId)) spot.classList.add("reserved");
+
+  spot.addEventListener("click", () => {
+    if (spot.classList.contains("reserved")) return;
+    document.querySelectorAll(".spot").forEach(s => s.classList.remove("selected"));
+    spot.classList.add("selected");
+    selectedSpot = spotId;
+    selectedSpotDisplay.textContent = `You have selected spot ${spotId}`;
+    validateForm();
+  });
+
+  parkingGrid.appendChild(spot);
+}
+
+// ======== VALIDATION ========
+  function validateForm() {
+  if (selectedSpot) {
+    reserveBtn.disabled = false;
+    reserveBtn.classList.add("active");
+  } else {
+    reserveBtn.disabled = true;
+    reserveBtn.classList.remove("active");
+  }
+}
+
+// ======== BUTTON ACTION ========
+reserveBtn.addEventListener("click", () => {
+  if (!selectedSpot) return;
+  // Redirect to contact page, passing selected spot + event
+  window.location.href = `details.html?spot=${selectedSpot}&event=${encodeURIComponent(eventName)}`;
+});
+</script>
+</body>
+</html>

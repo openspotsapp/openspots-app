@@ -1,0 +1,353 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #0f1f1c;
+  color: #eaf6f3;
+}
+
+.attendant-header {
+  position: relative;
+  background: #133a33;
+  padding: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header-center {
+  text-align: center;
+}
+
+.attendant-header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+}
+
+select {
+  padding: 6px;
+  font-size: 1rem;
+}
+
+
+#venueSelect {
+  padding: 8px;
+  font-size: 1rem;
+  margin: 22px auto;      /* 👈 THIS is the key */
+  display: block;     /* 👈 ensures margin auto works */
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.confirmed { background: #2e8b57; }
+.arrived { background: #1e90ff; }
+.expired { background: #6b7280; }
+.invalid { background: #dc2626; }
+
+#reservationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  padding: 12px;
+  margin-top: 12px;
+
+  height: auto;          /* ← THIS IS CRITICAL */
+  min-height: 200px;
+  overflow-y: auto;      /* allows scroll when many */
+}
+
+.reservation-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: #0f2f28;
+  color: white;
+
+  padding: 12px;
+  border-radius: 10px;
+}
+
+
+.reservation-card h3 {
+  margin: 0 0 4px 0;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  opacity: 0.7;
+}
+
+.attendant-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.attendant-logo {
+  height: 48px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+}
+
+
+.exit-btn {
+  position: absolute;
+  right: 18px;
+  top: 45px;
+  background: transparent;
+  border: 1px solid #eaf6f3;
+  color: #eaf6f3;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.exit-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.attendant-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.reservation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background: #0f2f28;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+
+.card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  padding-right: 15px;
+}
+
+.spot-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.venue-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.event-name {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.time-range {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.card-right {
+  display: flex;
+  align-items: center;
+}
+
+.status-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.map-toggle {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: #6ee7b7;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.map-toggle:hover {
+  text-decoration: underline;
+}
+
+.inline-map {
+  margin-top: 10px;
+  width: 100%;
+  height: 180px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.inline-map iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.hidden {
+  display: none;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 10px;
+}
+
+.card-bottom .map-toggle {
+  margin: 6px 0;
+  font-size: 0.75rem;
+}
+
+.inline-map {
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+
+.checkin-toggle {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #93c5fd;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.checkin-toggle:hover {
+  text-decoration: underline;
+}
+
+.checkin-panel {
+  margin-top: 10px;
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkin-panel input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85rem;
+}
+
+.checkin-panel button {
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkin-panel .scan-btn {
+  background: #1f2937;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.checkin-panel .confirm-btn {
+  background: #22c55e;
+  color: #022c22;
+}
+
+
+/* =========================
+   GATE vs LOT MODE TOGGLE
+========================= */
+
+.mode-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 6px;
+}
+
+.mode-btn {
+  padding: 6px 14px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent;
+  color: #eaf6f3;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: #22c55e;
+  color: #022c22;
+  border-color: transparent;
+}
+
+/* =========================
+   MODE BEHAVIOR
+========================= */
+
+/* Gate Mode: hide maps */
+body.gate-mode .map-toggle,
+body.gate-mode .inline-map {
+  display: none;
+}
+
+/* Lot Mode: hide check-in */
+body.lot-mode .checkin-toggle,
+body.lot-mode .checkin-panel {
+  display: none;
+}
+
+/* Lot Mode: auto-show maps */
+body.lot-mode .inline-map {
+  display: block;
+}
+
+/* Gate Mode: hide spot location label */
+body.gate-mode .spot-location-label {
+  display: none;
+}
+
+.spot-location-label {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #9fe5c2;
+  text-align: center;
+}

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Settings | OpenSpots</title>
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="firebase-init.js"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { app } from "./firebase-init.js";
+
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Not logged in → force login
+        window.location.replace("/login.html");
+      }
+    });
+  </script>
+
+  <script type="module" src="settings.js"></script>
+</head>
+
+<body class="page-bg">
+
+  <!-- HEADER -->
+  <div id="header"></div>
+  <div data-page-title="SETTINGS"></div>
+
+  <script src="load-components.js"></script>
+
+  <main class="page-container">
+
+  <!-- SETTINGS CONTAINER START -->
+  <div class="settings-gen-container">
+
+  <!-- ACCOUNT CARD -->
+  <section class="account-card">
+    <h2 id="userName"></h2>
+    <p id="userEmail"></p>
+    <p id="userPhone"></p>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="settings-section">
+    <h3 class="section-title">Settings</h3>
+
+    <div class="settings-card">
+      <a href="payment-options.html" class="settings-row">
+        <span>💳 Payment Options</span>
+        <span class="arrow">›</span>
+      </a>
+
+      <a href="notifications.html" class="settings-row">
+        <span>🔔 Notifications</span>
+        <span class="arrow">›</span>
+      </a>
+
+      <a href="edit-profile.html" class="settings-row">
+        <span>👤 Edit Profile</span>
+        <span class="arrow">›</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- GENERAL -->
+  <section class="settings-section">
+    <h3 class="section-title">General</h3>
+
+    <div class="settings-card">
+      <a href="partner.html" class="settings-row">
+        <span>🤝 Partner With Us</span>
+        <span class="arrow">›</span>
+      </a>
+
+      <a href="support-signed.html" class="settings-row">
+        <span>❓ Support</span>
+        <span class="arrow">›</span>
+      </a>
+
+      <a href="signed-terms.html" class="settings-row">
+        <span>🛡️ Terms of Service</span>
+        <span class="arrow">›</span>
+      </a>
+
+      <a href="invite.html" class="settings-row">
+        <span>📤 Invite Friends</span>
+        <span class="arrow">›</span>
+      </a>
+
+      <a href="attendant.html" id="switchAttendant" class="settings-row">
+        <span>🅿️ Switch to Attendant Mode</span>
+        <span class="arrow">›</span>
+      </a>
+
+    </div>
+  </section>
+
+  <div class="social-icons-row">
+    <a href="https://facebook.com/OpenSpotsApp" target="_blank" aria-label="Facebook">
+      <img src="assets/badge facebok.png" />
+    </a>
+    <a href="https://instagram.com/openspotsapp" target="_blank" aria-label="Instagram">
+      <img src="assets/badge instagram.png" />
+    </a>
+    <a href="https://twitter.com/openspotsapp" target="_blank" aria-label="X">
+      <img src="assets/badge X.png" />
+    <a href="https://tiktok.com/@openspots" target="_blank" aria-label="TikTok">
+      <img src="assets/badge tiktok.png" />
+    </a>
+    <a href="https://youtube.com/@openspotsapp" target="_blank" class="s">
+          <img src="assets/badge youtube.png" />
+    </a>
+  </div>
+
+  <!-- LOG OUT (exact placement you requested) -->
+  <div class="logout-wrapper">
+    <button id="logoutBtn" class="logout-btn">LOG OUT</button>
+  </div>
+
+<!-- SETTINGS CONTAINER END -->
+ </main>
+
+  <!-- NAVBAR -->
+  <div id="navbar">
+    <a href="venues.html" class="nav-item" data-target="venues.html"></a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600&display=swap");
+
+:root {
+  --white: #ffffff;
+  --green-dark: #1f6351;
+  --green-main: #358c74;
+  --green-accent: #48d9b0;
+  --green-soft: #80ffdb;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(160deg, var(--green-dark), var(--green-main));
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Montserrat", sans-serif;
+}
+
+.spot-entry-container {
+  text-align: center;
+}
+
+.spinner {
+  width: 52px;
+  height: 52px;
+  border: 4px solid rgba(255, 255, 255, 0.25);
+  border-top: 4px solid var(--green-soft);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 18px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#status-text {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  opacity: 0.95;
+}

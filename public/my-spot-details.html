@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Spot Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="myspots.css" />
+</head>
+<body>
+
+  <!-- Load global header -->
+  <div id="header"></div>
+  <div data-page-title="MY SPOT DETAILS"></div>
+
+  <!-- Custom Back Button (ONLY ON THIS PAGE) -->
+  <div class="spot-details-header-back">
+    <button class="spot-back-btn" onclick="history.back()">
+      く
+    </button>
+  </div>
+
+  <main class="page-container my-spot-container">
+
+  <!-- Venue Hero -->
+    <section class="venue-hero">
+      <div class="qr-container">
+        <h2 class="qr-title">Scan at Entrance</h2>
+
+        <div class="qr-image-wrapper">
+          <img
+            id="qrImage"
+            class="qr-image"
+            alt="Parking QR Code"
+          />
+        </div>
+
+        <p class="qr-subtext">
+          Show this QR code to the parking attendant
+        </p>
+
+        <div class="qr-fallback">
+          <span class="qr-fallback-label">Confirmation Code</span>
+          <span id="confirmationCode" class="qr-fallback-code">—</span>
+        </div>
+      </div>
+    </section>
+
+<section class="venue-info-card">
+  <h1 id="venueName"></h1>
+  <p class="event-name" id="eventName"></p>
+  <p class="event-date" id="eventDate"></p>
+</section>
+
+
+  <!-- Reservation Card -->
+  <section class="reservation-card">
+    <div class="row">
+      <span>Spot</span>
+      <strong id="spotId"></strong>
+    </div>
+    <div class="row">
+      <span>Status</span>
+      <strong class="status confirmed" id="status"></strong>
+    </div>
+    <div class="row">
+      <span>Price Paid</span>
+      <strong id="pricePaid"></strong>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <button class="directionsBtn" id="getDirectionsBtn">
+    Get Directions
+  </button>
+
+</main>
+
+
+
+  <!-- Scripts -->
+  <script type="module" src="firebase-init.js"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from
+      "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { app } from "./firebase-init.js";
+
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Not logged in → force login
+        window.location.replace("/login.html");
+      }
+    });
+  </script>
+
+  <script type="module" src="my-spot-details.js"></script>
+  <script src="load-components.js"></script>
+
+</body>
+</html>

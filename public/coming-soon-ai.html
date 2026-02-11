@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Upcoming A.I. Tech | OpenSpots</title>
+
+  <!-- Favicon / Fonts / Styles -->
+  <link rel="icon" type="image/png" href="assets/Facebook Profile Picture.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- Header -->
+  <header>
+    <div class="brand-left"><h1>OpenSpots</h1></div>
+    <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="logo-center" />
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+        <li>
+            <a href="coming-soon-app.html" class="nav-coming-soon"> Coming Soon 
+            <img src="assets/app vector.png" alt="App Icon" class="nav-icon">
+            </a>
+        </li>
+        <li><a href="login.html" class="button">Log In / Sign Up</a></li>
+      </ul>
+    </nav>
+    <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+  </header>
+
+  <main class="ai-page">
+    <div class="ai-container">
+      <h1>OpenSpots <span>A.I.</span></h1>
+      <p>Your parking assistant is getting smarter — powered by AI.</p>
+      <p class="subtext">Be the first to experience predictive parking insights.</p>
+
+      <form id="aiForm" class="ai-form">
+        <input type="email" id="aiEmail" placeholder="Enter your email" required />
+        <button type="submit" class="btn-primary">Notify Me</button>
+      </form>
+
+      <p class="small-text">
+        We’ll notify you once OpenSpots AI launches.
+      </p>
+    </div>
+  </main>
+
+  <!-- Success Modal -->
+<div id="aiSuccessModal" class="modal">
+  <div class="modal-content">
+    <h2>Thanks for your interest!</h2>
+    <p>We'll notify you when OpenSpots A.I. launches.</p>
+    <button onclick="closeAiModal('aiSuccessModal')">Close</button>
+  </div>
+</div>
+
+<!-- Error Modal -->
+<div id="aiErrorModal" class="modal">
+  <div class="modal-content">
+    <h2>Oops!</h2>
+    <p>Something went wrong. Please try again later.</p>
+    <button onclick="closeAiModal('aiErrorModal')">Close</button>
+  </div>
+</div>
+
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-brand">
+        <img src="assets/Facebook Profile Picture.png" alt="OpenSpots Logo" class="footer-logo" />
+        <p><strong>OpenSpots</strong> | Smarter Parking with Sensors</p>
+        <p>Powered by AI &amp; IoT · Est. 2025</p>
+      </div>
+
+      <div class="footer-links">
+        <div>
+          <h4>Book Parking</h4>
+          <ul>
+            <li><a href="contact.html">Event Parking</a></li>
+            <li><a href="contact.html">Airport Parking</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Partners</h4>
+          <ul>
+            <li><a href="contact.html">Become a Partner</a></li>
+            <li><a href="contact.html">Venues &amp; Events</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-social">
+        <h4>Follow Us</h4>
+        <div class="social-icons">
+          <a href="https://instagram.com/openspotsapp" target="_blank" rel="noopener">
+            <img src="assets/badge instagram.png" alt="Instagram" />
+          </a>
+          <a href="https://twitter.com/openspotsapp" target="_blank" rel="noopener">
+            <img src="assets/badge X.png" alt="Twitter / X" />
+          </a>
+          <a href="https://tiktok.com/@openspotsapp" target="_blank" rel="noopener">
+            <img src="assets/badge tiktok.png" alt="TikTok" />
+          </a>
+          <a href="https://youtube.com/@openspotsapp" target="_blank" rel="noopener">
+            <img src="assets/badge youtube.png" alt="YouTube" />
+          </a>
+          <a href="mailto:contact@openspots.app">
+            <img src="assets/badge email.png" alt="Email" />
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>© OpenSpots 2025. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

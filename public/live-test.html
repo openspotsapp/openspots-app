@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <title>OpenSpots Live Test</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f7f7f7; }
+    .bubble {
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      background: #fff;
+      border-left: 5px solid #358c74;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h2>OpenSpots Real-Time AMQP Feed</h2>
+  <div id="log"></div>
+
+  <script>
+    const log = document.getElementById("log");
+    const evtSource = new EventSource("/events/spot-updates");
+
+    evtSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const div = document.createElement("div");
+      div.className = "bubble";
+      div.innerText = JSON.stringify(data, null, 2);
+      log.prepend(div);
+    };
+  </script>
+</body>
+</html>
